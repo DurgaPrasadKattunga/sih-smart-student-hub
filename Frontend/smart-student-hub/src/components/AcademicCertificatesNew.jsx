@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+const backendUrl = import.meta.env.VITE_API_URL;
 
 const AcademicCertificatesNew = ({ studentData }) => {
   const navigate = useNavigate();
@@ -369,7 +370,7 @@ const AcademicCertificatesNew = ({ studentData }) => {
           
           {cert.image && (
             <img 
-              src={`http://localhost:3000${cert.image}`}  
+              src={`${backendUrl}${cert.image}`}
               alt={cert.certificateName}
               className="w-full h-32 object-cover rounded-lg mb-4"
             />
@@ -521,7 +522,7 @@ const AcademicCertificatesNew = ({ studentData }) => {
               <div className="w-1/2 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-8">
                 {selectedCertificate.image ? (
                   <img 
-                    src={`http://localhost:3000${selectedCertificate.image}`} 
+                    src={`${backendUrl}${selectedCertificate.image}`}
                     alt={selectedCertificate.certificateName}
                     className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                   />

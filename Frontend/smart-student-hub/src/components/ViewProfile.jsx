@@ -8,6 +8,8 @@ const ViewProfile = ({ studentData }) => {
   const [fullStudentData, setFullStudentData] = useState(studentData);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const backendUrl = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     fetchProfile();
     fetchFullStudentData();
@@ -58,9 +60,9 @@ const ViewProfile = ({ studentData }) => {
       <div className="container mx-auto p-6">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/20">
           <div className="text-center mb-8">
-            {profile.profileImage ? (
+              {profile.profileImage ? (
               <img
-                src={`http://localhost:3000${profile.profileImage}`}
+                src={`${backendUrl}${profile.profileImage}`}
                 alt="Profile"
                 className="w-32 h-32 rounded-full mx-auto mb-4 shadow-lg border-4 border-white"
               />
@@ -69,6 +71,7 @@ const ViewProfile = ({ studentData }) => {
                 {fullStudentData?.name?.charAt(0) || "S"}
               </div>
             )}
+
             <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               {fullStudentData.name}
             </h2>
@@ -141,125 +144,79 @@ const ViewProfile = ({ studentData }) => {
             </div>
           </div>
 
-          <div className="mt-8">
-            <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Educational Certificates
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {profile.class10Certificate && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    10th Certificate
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.class10Certificate}`}
-                    alt="10th Certificate"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src: `http://localhost:3000${profile.class10Certificate}`,
-                        title: "10th Certificate",
-                      })
-                    }
-                  />
-                </div>
-              )}
+ {/* Educational Certificates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {profile.class10Certificate && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">10th Certificate</h4>
+                <img
+                  src={`${backendUrl}${profile.class10Certificate}`}
+                  alt="10th Certificate"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.class10Certificate}`, title: "10th Certificate" })}
+                />
+              </div>
+            )}
 
-              {profile.class12Certificate && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    12th Certificate
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.class12Certificate}`}
-                    alt="12th Certificate"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src: `http://localhost:3000${profile.class12Certificate}`,
-                        title: "12th Certificate",
-                      })
-                    }
-                  />
-                </div>
-              )}
+            {profile.class12Certificate && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">12th Certificate</h4>
+                <img
+                  src={`${backendUrl}${profile.class12Certificate}`}
+                  alt="12th Certificate"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.class12Certificate}`, title: "12th Certificate" })}
+                />
+              </div>
+            )}
 
-              {profile.diplomaCertificate && (
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Diploma Certificate
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.diplomaCertificate}`}
-                    alt="Diploma Certificate"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src:`http://localhost:3000${profile.diplomaCertificate}`,
-                        title: "Diploma Certificate",
-                      })
-                    }
-                  />
-                </div>
-              )}
+            {profile.diplomaCertificate && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">Diploma Certificate</h4>
+                <img
+                  src={`${backendUrl}${profile.diplomaCertificate}`}
+                  alt="Diploma Certificate"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.diplomaCertificate}`, title: "Diploma Certificate" })}
+                />
+              </div>
+            )}
 
-              {profile.bachelorDegree && (
-                <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Bachelor Degree
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.bachelorDegree}`}
-                    alt="Bachelor Degree"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src: `http://localhost:3000${profile.bachelorDegree}`,
-                        title: "Bachelor Degree",
-                      })
-                    }
-                  />
-                </div>
-              )}
+            {profile.bachelorDegree && (
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">Bachelor Degree</h4>
+                <img
+                  src={`${backendUrl}${profile.bachelorDegree}`}
+                  alt="Bachelor Degree"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.bachelorDegree}`, title: "Bachelor Degree" })}
+                />
+              </div>
+            )}
 
-              {profile.masterDegree && (
-                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Master Degree
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.masterDegree}`}
-                    alt="Master Degree"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src: `http://localhost:3000${profile.masterDegree}`,
-                        title: "Master Degree",
-                      })
-                    }
-                  />
-                </div>
-              )}
+            {profile.masterDegree && (
+              <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">Master Degree</h4>
+                <img
+                  src={`${backendUrl}${profile.masterDegree}`}
+                  alt="Master Degree"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.masterDegree}`, title: "Master Degree" })}
+                />
+              </div>
+            )}
 
-              {profile.doctorDegree && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Doctor Degree
-                  </h4>
-                  <img
-                    src={`http://localhost:3000${profile.doctorDegree}`}
-                    alt="Doctor Degree"
-                    className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() =>
-                      setSelectedImage({
-                        src: `http://localhost:3000${profile.doctorDegree}`,
-                        title: "Doctor Degree",
-                      })
-                    }
-                  />
-                </div>
-              )}
-            </div>
+            {profile.doctorDegree && (
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-700 mb-2">Doctor Degree</h4>
+                <img
+                  src={`${backendUrl}${profile.doctorDegree}`}
+                  alt="Doctor Degree"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.doctorDegree}`, title: "Doctor Degree" })}
+                />
+              </div>
+            )}
           </div>
 
           {/* <div className="mt-8">

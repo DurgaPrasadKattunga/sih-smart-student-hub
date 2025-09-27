@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-
+const backendUrl = import.meta.env.VITE_API_URL;
 const TeacherDashboard = ({ teacherData, onLogout }) => {
   const navigate = useNavigate();
   const [backendStatus, setBackendStatus] = useState("Connecting...");
@@ -1461,8 +1461,8 @@ const TeacherDashboard = ({ teacherData, onLogout }) => {
                           {cert.image && (
                             <button
                               onClick={() => {
-                                setSelectedImage(`http://localhost:3000${cert.image}`);
-                                setShowImagePopup(true);
+                                  setSelectedImage(`${backendUrl}${cert.image}`);
+                                   setShowImagePopup(true);
                               }}
                               className="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                             >
