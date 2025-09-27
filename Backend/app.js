@@ -1,0 +1,588 @@
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const connectDB = require("./config/database");
+const Student = require("./models/Student");
+const Teacher = require("./models/Teacher");
+const Admin = require("./models/Admin");
+const College = require("./models/College");
+const Group = require("./models/Group");
+const Message = require("./models/Message");
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer setup for file uploads - save to disk
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname) || "";
+    cb(null, unique + ext);
+  },
+});
+const upload = multer({ storage });
+
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Serve uploaded files
+app.use('/uploads', express.static(uploadsDir));
+
+// ---------------------
+// Basic routes
+// ---------------------
+app.get("/", (req, res) => res.send("Smart Student Hub Dashboard - Please use the frontend application"));
+
+app.get("/api/test", (req, res) => res.json({ message: "Backend connected successfully!" }));
+
+// ---------------------
+// Colleges routes
+// ---------------------
+app.get("/api/colleges", async (req, res) => {
+  try {
+    let colleges = await College.find({}, { name: 1, departments: 1 }).lean();
+
+    if (!colleges || colleges.length === 0) {
+      // Auto-seed a minimal set if empty to improve first-run UX
+      const defaults = [
+        {
+          name: 'MIT College of Engineering',
+          code: 'MITCOE',
+          address: 'Pune, India',
+          createdBy: 'SYSTEM',
+          departments: [
+            { name: 'Computer Science', code: 'CSE' },
+            { name: 'Information Technology', code: 'IT' },
+            { name: 'Mechanical Engineering', code: 'ME' },
+          ],
+        },
+        {
+          name: 'Stanford University',
+          code: 'STANFD',
+          address: 'Stanford, CA, USA',
+          createdBy: 'SYSTEM',
+          departments: [
+            { name: 'Computer Science', code: 'CS' },
+            { name: 'Electrical Engineering', code: 'EE' },
+          ],
+        },
+      ];
+
+      await College.insertMany(defaults);
+      colleges = await College.find({}, { name: 1, departments: 1 }).lean();
+    }
+
+    res.json(colleges);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Admin routes
+// ---------------------
+app.post("/api/admin/register", async (req, res) => {
+  try {
+    const { password, confirmPassword, ...adminData } = req.body;
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const admin = new Admin({ ...adminData, password: hashedPassword });
+    await admin.save();
+
+    // Automatically create college if not exists
+    const existingCollege = await College.findOne({ name: admin.institution });
+    if (!existingCollege && admin.institution && admin.department) {
+      const collegeCode = admin.institution.replace(/\s+/g, '').substring(0, 6).toUpperCase();
+      const deptCode = admin.department.replace(/\s+/g, '').substring(0, 4).toUpperCase();
+      const newCollege = new College({
+        name: admin.institution,
+        code: collegeCode,
+        address: 'Not specified',
+        departments: [{ name: admin.department, code: deptCode }],
+        createdBy: admin.adminId
+      });
+      await newCollege.save();
+    }
+
+    res.status(201).json({ message: "Admin registered successfully", adminId: admin.adminId, name: admin.name });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const admin = await Admin.findOne({ email });
+    if (!admin) return res.status(400).json({ error: "Invalid email or password" });
+
+    const valid = await bcrypt.compare(password, admin.password);
+    if (!valid) return res.status(400).json({ error: "Invalid email or password" });
+
+    res.json({ message: "Login successful", adminId: admin.adminId, name: admin.name });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Student routes
+// ---------------------
+app.post("/api/register", async (req, res) => {
+  try {
+    const { password, confirmPassword, ...studentData } = req.body;
+    if (password !== confirmPassword) return res.status(400).json({ error: "Passwords do not match" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const student = new Student({ ...studentData, password: hashedPassword });
+    await student.save();
+
+    res.status(201).json({ message: "Student registered successfully", studentId: student.studentId });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const student = await Student.findOne({ email });
+    if (!student) return res.status(400).json({ error: "Invalid email or password" });
+
+    const valid = await bcrypt.compare(password, student.password);
+    if (!valid) return res.status(400).json({ error: "Invalid email or password" });
+
+    res.json({ message: "Login successful", studentId: student.studentId, name: student.name });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Teacher routes
+// ---------------------
+app.post("/api/teacher/register", async (req, res) => {
+  try {
+    const { password, confirmPassword, experience, ...teacherData } = req.body;
+    if (password !== confirmPassword) return res.status(400).json({ error: "Passwords do not match" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const teacher = new Teacher({ ...teacherData, password: hashedPassword, experience: parseInt(experience) || 0 });
+    await teacher.save();
+
+    res.status(201).json({ message: "Teacher registered successfully", teacherId: teacher.teacherId });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/teacher/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) return res.status(400).json({ error: "Invalid email or password" });
+
+    const valid = await bcrypt.compare(password, teacher.password);
+    if (!valid) return res.status(400).json({ error: "Invalid email or password" });
+
+    res.json({ message: "Login successful", teacherId: teacher.teacherId, name: teacher.name });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Academic certificates
+// ---------------------
+app.post("/api/academic-certificates", upload.single("image"), async (req, res) => {
+  try {
+    const { studentId, domain, certificateName, certificateUrl, date, issuedBy, description, skills, duration, location, organizationType } = req.body;
+
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+    const newCert = {
+      domain,
+      certificateName,
+      image: imageUrl,
+      certificateUrl,
+      date,
+      issuedBy,
+      description,
+      skills: skills ? JSON.parse(skills) : [],
+      duration,
+      location,
+      organizationType,
+      status: 'pending',
+      submittedAt: new Date()
+    };
+
+    student.academicCertificates = student.academicCertificates || [];
+    student.academicCertificates.push(newCert);
+    await student.save();
+
+    res.status(201).json({ message: "Certificate submitted", certificate: newCert });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Fetch student's academic certificates
+app.get("/api/academic-certificates/:studentId", async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json(student.academicCertificates || []);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete a specific academic certificate
+app.delete("/api/academic-certificates/:studentId/:certificateId", async (req, res) => {
+  try {
+    const { studentId, certificateId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const beforeCount = (student.academicCertificates || []).length;
+    student.academicCertificates = (student.academicCertificates || []).filter((c) => String(c._id) !== String(certificateId));
+    const afterCount = student.academicCertificates.length;
+
+    if (beforeCount === afterCount) {
+      return res.status(404).json({ error: "Certificate not found" });
+    }
+
+    await student.save();
+    res.json({ message: "Certificate deleted" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Teacher groups
+// ---------------------
+app.get('/api/teacher/groups/:teacherId', async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const groups = await Group.find({ teacher: teacherId });
+    res.json(groups);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Admin students (for teacher dashboard)
+// ---------------------
+app.get('/api/admin/students', async (req, res) => {
+  try {
+    const students = await Student.find({}, { 
+      studentId: 1, 
+      name: 1, 
+      email: 1, 
+      college: 1, 
+      department: 1, 
+      year: 1, 
+      semester: 1, 
+      rollNumber: 1 
+    });
+    res.json(students);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Academic certificates review (teacher)
+// ---------------------
+app.get('/api/review/academic-certificates', async (req, res) => {
+  try {
+    // Flatten pending certificates across students for review listing
+    const students = await Student.find({}, { name: 1, studentId: 1, academicCertificates: 1 }).lean();
+    const items = [];
+    for (const s of students) {
+      for (const c of (s.academicCertificates || [])) {
+        if (c.status === 'pending') {
+          items.push({
+            studentId: s.studentId,
+            studentName: s.name,
+            certificateId: String(c._id),
+            domain: c.domain,
+            certificateName: c.certificateName,
+            image: c.image,
+            certificateUrl: c.certificateUrl,
+            date: c.date,
+            issuedBy: c.issuedBy,
+            description: c.description,
+            skills: c.skills,
+            duration: c.duration,
+            location: c.location,
+            organizationType: c.organizationType,
+            submittedAt: c.submittedAt,
+          });
+        }
+      }
+    }
+    res.json(items);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/review/academic-certificates/:studentId/:certificateId/approve', async (req, res) => {
+  try {
+    const { studentId, certificateId } = req.params;
+    const { feedback } = req.body;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    const cert = (student.academicCertificates || []).find(c => String(c._id) === String(certificateId));
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    cert.status = 'approved';
+    cert.feedback = feedback || '';
+    cert.reviewedAt = new Date();
+    await student.save();
+    res.json({ message: 'Certificate approved' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/review/academic-certificates/:studentId/:certificateId/reject', async (req, res) => {
+  try {
+    const { studentId, certificateId } = req.params;
+    const { feedback } = req.body;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    const cert = (student.academicCertificates || []).find(c => String(c._id) === String(certificateId));
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    cert.status = 'rejected';
+    cert.feedback = feedback || '';
+    cert.reviewedAt = new Date();
+    await student.save();
+    res.json({ message: 'Certificate rejected' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Personal achievements (personal certificates)
+// ---------------------
+app.get("/api/certificates/:studentId", async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json(student.personalCertificates || []);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/certificates", upload.single("image"), async (req, res) => {
+  try {
+    const { studentId, name, url, date, category, issuer } = req.body;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+
+    const newCert = {
+      name,
+      image: imageUrl,
+      url,
+      date,
+      category,
+      issuer,
+    };
+
+    student.personalCertificates = student.personalCertificates || [];
+    student.personalCertificates.push(newCert);
+    await student.save();
+
+    res.status(201).json({ message: "Certificate added", certificate: newCert });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete("/api/certificates/:studentId/:certificateId", async (req, res) => {
+  try {
+    const { studentId, certificateId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
+    const before = (student.personalCertificates || []).length;
+    student.personalCertificates = (student.personalCertificates || []).filter((c) => String(c._id) !== String(certificateId));
+    if (before === student.personalCertificates.length) {
+      return res.status(404).json({ error: "Certificate not found" });
+    }
+    await student.save();
+    res.json({ message: "Certificate deleted" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ---------------------
+// Student profile routes
+// ---------------------
+app.get("/api/profile/:studentId", async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json(student.profile || {});
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.put(
+  "/api/profile/:studentId",
+  upload.fields([
+    { name: "profileImage", maxCount: 1 },
+    { name: "class10Certificate", maxCount: 1 },
+    { name: "class12Certificate", maxCount: 1 },
+    { name: "diplomaCertificate", maxCount: 1 },
+    { name: "bachelorDegree", maxCount: 1 },
+    { name: "masterDegree", maxCount: 1 },
+    { name: "doctorDegree", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const student = await Student.findOne({ studentId });
+      if (!student) return res.status(404).json({ error: "Student not found" });
+
+      const toUrl = (file) => (file ? `/uploads/${file.filename}` : undefined);
+
+      const fileFields = [
+        "profileImage",
+        "class10Certificate",
+        "class12Certificate",
+        "diplomaCertificate",
+        "bachelorDegree",
+        "masterDegree",
+        "doctorDegree",
+      ];
+
+      const textFields = [
+        "aadharNumber",
+        "mobileNumber",
+        "collegeEmail",
+        "linkedinProfile",
+        "githubProfile",
+      ];
+
+      student.profile = student.profile || {};
+
+      // Handle files first
+      for (const field of fileFields) {
+        const file = req.files && req.files[field] && req.files[field][0];
+        if (file) {
+          student.profile[field] = toUrl(file);
+        } else if (typeof req.body[field] === "string" && req.body[field].length > 0) {
+          // allow updating with existing data URLs
+          student.profile[field] = req.body[field];
+        }
+      }
+
+      // Handle text fields
+      for (const field of textFields) {
+        if (field in req.body) {
+          student.profile[field] = req.body[field];
+        }
+      }
+
+      await student.save();
+      res.json({ message: "Profile updated", profile: student.profile });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+// ---------------------
+// Projects
+// ---------------------
+app.get('/api/projects/:studentId', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    res.json(student.projects || []);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/projects', async (req, res) => {
+  try {
+    const { studentId, title, description, githubLink, deployLink } = req.body;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    const newProject = {
+      title,
+      description,
+      githubLink,
+      deployLink,
+      createdAt: new Date(),
+    };
+
+    student.projects = student.projects || [];
+    student.projects.push(newProject);
+    await student.save();
+
+    res.status(201).json({ message: 'Project added', project: newProject });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.delete('/api/projects/:studentId/:projectId', async (req, res) => {
+  try {
+    const { studentId, projectId } = req.params;
+    const student = await Student.findOne({ studentId });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    const before = (student.projects || []).length;
+    student.projects = (student.projects || []).filter((p) => String(p._id) !== String(projectId));
+    if (before === student.projects.length) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    await student.save();
+    res.json({ message: 'Project deleted' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
