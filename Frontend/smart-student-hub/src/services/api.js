@@ -1,14 +1,10 @@
-import axios from 'axios';
-
-// Prefer Vite dev proxy by default. Set VITE_API_BASE_URL to override in prod.
-const API_BASE_URL = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL !== undefined
-  ? import.meta.env.VITE_API_BASE_URL
-  : '';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  // ✅ Use Vite env variable (must start with VITE_)
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: false,
 });

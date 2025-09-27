@@ -44,7 +44,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve uploaded files
@@ -156,18 +155,27 @@ app.post("/api/admin/login", async (req, res) => {
 // ---------------------
 app.post("/api/register", async (req, res) => {
   try {
-    const { password, confirmPassword, ...studentData } = req.body;
-    if (password !== confirmPassword) return res.status(400).json({ error: "Passwords do not match" });
+    const { password, ...studentData } = req.body;
 
+    // ✅ Hash password and save
     const hashedPassword = await bcrypt.hash(password, 10);
-    const student = new Student({ ...studentData, password: hashedPassword });
+    const student = new Student({
+      ...studentData,
+      password: hashedPassword,
+    });
+
     await student.save();
 
-    res.status(201).json({ message: "Student registered successfully", studentId: student.studentId });
+    res.status(201).json({
+      message: "Student registered successfully",
+      studentId: student.studentId,
+    });
   } catch (error) {
+    console.error("❌ Registration Error:", error.message);
     res.status(400).json({ error: error.message });
   }
 });
+
 
 app.post("/api/login", async (req, res) => {
   try {
