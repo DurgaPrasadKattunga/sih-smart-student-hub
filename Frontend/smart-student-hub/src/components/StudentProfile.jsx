@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+const backendUrl = import.meta.env.VITE_API_URL;
 
 const StudentProfile = ({ studentData }) => {
   const navigate = useNavigate();
@@ -208,10 +209,15 @@ const StudentProfile = ({ studentData }) => {
                         <div className="space-y-3">
                           <div className="relative group">
                             <img 
-                              src={profile[cert.name] ? `http://localhost:3000${profile[cert.name]}` : ""}
+                              src={profile[cert.name] ? `${backendUrl}${profile[cert.name]}` : ""}
                               alt={cert.label} 
                               className="w-full h-40 object-cover rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-all duration-300 group-hover:scale-105" 
-                                onClick={() => setSelectedImage({src: `http://localhost:3000${profile[cert.name]}`, title: cert.label})}
+                                onClick={() =>
+                                  setSelectedImage({
+                                    src: `${backendUrl}${profile[cert.name]}`,
+                                    title: cert.label,
+                                  })
+                                }
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all duration-300 flex items-center justify-center">
                               <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="currentColor" viewBox="0 0 20 20">
