@@ -145,6 +145,7 @@ const ViewProfile = ({ studentData }) => {
           </div>
 
  {/* Educational Certificates */}
+          <div className = "mt-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {profile.class10Certificate && (
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
@@ -218,7 +219,7 @@ const ViewProfile = ({ studentData }) => {
               </div>
             )}
           </div>
-
+        </div>
           {/* <div className="mt-8">
             <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Academic Records
