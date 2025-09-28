@@ -461,13 +461,7 @@ app.get("/api/certificates/:studentId", async (req, res) => {
 });
 
 
-const cloudinary = require("cloudinary").v2;
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 app.post("/api/certificates", upload.single("image"), async (req, res) => {
   try {
