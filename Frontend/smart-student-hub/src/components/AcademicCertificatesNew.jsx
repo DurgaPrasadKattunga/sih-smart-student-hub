@@ -370,7 +370,7 @@ const AcademicCertificatesNew = ({ studentData }) => {
           
           {cert.image && (
             <img 
-              src={`${backendUrl}${cert.image}`}
+              src={`${cert.image}`}
               alt={cert.certificateName}
               className="w-full h-32 object-cover rounded-lg mb-4"
             />
@@ -522,7 +522,7 @@ const AcademicCertificatesNew = ({ studentData }) => {
               <div className="w-1/2 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-8">
                 {selectedCertificate.image ? (
                   <img 
-                    src={`${backendUrl}${selectedCertificate.image}`}
+                    src={`${selectedCertificate.image}`}
                     alt={selectedCertificate.certificateName}
                     className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
                   />

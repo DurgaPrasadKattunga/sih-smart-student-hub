@@ -183,77 +183,78 @@ const StudentProfile = ({ studentData }) => {
                 </div>
               </div>
 
-              {/* Educational Certificates Section */}
-              <div className="bg-white/60 backdrop-blur-xl rounded-2xl p-8 border border-white/40 shadow-lg">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 714.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 713.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 710 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 71-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 71-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 71-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 710-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 713.138-3.138z"/>
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800">Educational Certificates</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    { name: 'class10Certificate', label: '10th Certificate' },
-                    { name: 'class12Certificate', label: '12th Certificate' },
-                    { name: 'diplomaCertificate', label: 'Diploma Certificate' },
-                    { name: 'bachelorDegree', label: 'Bachelor Degree' },
-                    { name: 'masterDegree', label: 'Master Degree' },
-                    { name: 'doctorDegree', label: 'Doctor Degree' }
-                  ].map((cert) => (
-                    <div key={cert.name} className="space-y-3">
-                      <label className="block text-sm font-semibold text-gray-700">{cert.label}</label>
-                      {profile[cert.name] ? (
-                        <div className="space-y-3">
-                          <div className="relative group">
-                            <img 
-                              src={profile[cert.name] ? `${backendUrl}${profile[cert.name]}` : ""}
-                              alt={cert.label} 
-                              className="w-full h-40 object-cover rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-all duration-300 group-hover:scale-105" 
-                                onClick={() =>
-                                  setSelectedImage({
-                                    src: `${backendUrl}${profile[cert.name]}`,
-                                    title: cert.label,
-                                  })
-                                }
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all duration-300 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd"/>
-                              </svg>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById(cert.name).click()}
-                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
-                          >
-                            Replace Certificate
-                          </button>
-                          <input
-                            id={cert.name}
-                            type="file"
-                            name={cert.name}
-                            accept=".jpg,.jpeg,.png,.pdf"
-                            onChange={handleChange}
-                            className="hidden"
-                          />
-                        </div>
-                      ) : (
-                        <input
-                          type="file"
-                          name={cert.name}
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          onChange={handleChange}
-                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+             {/* Educational Certificates Section */}
+<div className="bg-white/60 backdrop-blur-xl rounded-2xl p-8 border border-white/40 shadow-lg">
+  <div className="flex items-center mb-6">
+    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
+      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 714.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 713.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 710 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 71-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 71-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 71-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 710-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 713.138-3.138z"/>
+      </svg>
+    </div>
+    <h3 className="text-2xl font-bold text-gray-800">Educational Certificates</h3>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[
+      { name: 'class10Certificate', label: '10th Certificate' },
+      { name: 'class12Certificate', label: '12th Certificate' },
+      { name: 'diplomaCertificate', label: 'Diploma Certificate' },
+      { name: 'bachelorDegree', label: 'Bachelor Degree' },
+      { name: 'masterDegree', label: 'Master Degree' },
+      { name: 'doctorDegree', label: 'Doctor Degree' }
+    ].map((cert) => (
+      <div key={cert.name} className="space-y-3">
+        <label className="block text-sm font-semibold text-gray-700">{cert.label}</label>
+        
+        {profile[cert.name] ? (
+          <div className="space-y-3">
+            <div className="relative group">
+              <img
+                src={profile[cert.name]} // Directly use Cloudinary URL
+                alt={cert.label}
+                className="w-full h-40 object-cover rounded-xl border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-all duration-300 group-hover:scale-105"
+                onClick={() =>
+                  setSelectedImage({
+                    src: profile[cert.name],
+                    title: cert.label,
+                  })
+                }
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all duration-300 flex items-center justify-center">
+                <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd"/>
+                </svg>
               </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById(cert.name).click()}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              Replace Certificate
+            </button>
+            <input
+              id={cert.name}
+              type="file"
+              name={cert.name}
+              accept=".jpg,.jpeg,.png,.pdf"
+              onChange={handleChange}
+              className="hidden"
+            />
+          </div>
+        ) : (
+          <input
+            type="file"
+            name={cert.name}
+            accept=".jpg,.jpeg,.png,.pdf"
+            onChange={handleChange}
+            className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+        )}
+      </div>
+    ))}
+  </div>
+</div>
 
               {/* Social Profiles Section */}
               <div className="bg-white/60 backdrop-blur-xl rounded-2xl p-8 border border-white/40 shadow-lg">

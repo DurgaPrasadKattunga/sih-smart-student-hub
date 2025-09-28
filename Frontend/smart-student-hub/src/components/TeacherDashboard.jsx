@@ -1461,7 +1461,7 @@ const TeacherDashboard = ({ teacherData, onLogout }) => {
                           {cert.image && (
                             <button
                               onClick={() => {
-                                  setSelectedImage(`${backendUrl}${cert.image}`);
+                                  setSelectedImage(`${cert.image}`);
                                    setShowImagePopup(true);
                               }}
                               className="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors"

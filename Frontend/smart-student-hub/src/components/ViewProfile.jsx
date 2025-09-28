@@ -62,7 +62,7 @@ const ViewProfile = ({ studentData }) => {
           <div className="text-center mb-8">
               {profile.profileImage ? (
               <img
-                src={`${backendUrl}${profile.profileImage}`}
+                src={`${profile.profileImage}`}
                 alt="Profile"
                 className="w-32 h-32 rounded-full mx-auto mb-4 shadow-lg border-4 border-white"
               />
@@ -151,10 +151,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">10th Certificate</h4>
                 <img
-                  src={`${backendUrl}${profile.class10Certificate}`}
+                   src={profile.class10Certificate} 
                   alt="10th Certificate"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.class10Certificate}`, title: "10th Certificate" })}
+                  onClick={() => setSelectedImage({ src: profile.class10Certificate, title: "10th Certificate" })}
                 />
               </div>
             )}
@@ -163,10 +163,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">12th Certificate</h4>
                 <img
-                  src={`${backendUrl}${profile.class12Certificate}`}
+                   src={profile.class12Certificate} 
                   alt="12th Certificate"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.class12Certificate}`, title: "12th Certificate" })}
+                  onClick={() => setSelectedImage({  src: profile.class12Certificate, title: "12th Certificate" })}
                 />
               </div>
             )}
@@ -175,10 +175,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">Diploma Certificate</h4>
                 <img
-                  src={`${backendUrl}${profile.diplomaCertificate}`}
+                  src={ `${profile.diplomaCertificate}`}
                   alt="Diploma Certificate"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.diplomaCertificate}`, title: "Diploma Certificate" })}
+                  onClick={() => setSelectedImage({src:profile.diplomaCertificate , title: "Diploma Certificate" })}
                 />
               </div>
             )}
@@ -187,10 +187,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">Bachelor Degree</h4>
                 <img
-                  src={`${backendUrl}${profile.bachelorDegree}`}
+                  src={profile.bachelorDegree}
                   alt="Bachelor Degree"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.bachelorDegree}`, title: "Bachelor Degree" })}
+                  onClick={() => setSelectedImage({ src: profile.bachelorDegree, title: "Bachelor Degree" })}
                 />
               </div>
             )}
@@ -199,10 +199,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">Master Degree</h4>
                 <img
-                  src={`${backendUrl}${profile.masterDegree}`}
+                   src={profile.masterDegree} 
                   alt="Master Degree"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.masterDegree}`, title: "Master Degree" })}
+                  onClick={() => setSelectedImage({ src: profile.masterDegree, title: "Master Degree" })}
                 />
               </div>
             )}
@@ -211,10 +211,10 @@ const ViewProfile = ({ studentData }) => {
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl">
                 <h4 className="font-semibold text-gray-700 mb-2">Doctor Degree</h4>
                 <img
-                  src={`${backendUrl}${profile.doctorDegree}`}
+                  src={profile.doctorDegree} 
                   alt="Doctor Degree"
                   className="w-full h-32 object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => setSelectedImage({ src: `${backendUrl}${profile.doctorDegree}`, title: "Doctor Degree" })}
+                  onClick={() => setSelectedImage({src: profile.doctorDegree, title: "Doctor Degree" })}
                 />
               </div>
             )}
