@@ -461,46 +461,44 @@ app.get("/api/certificates/:studentId", async (req, res) => {
 });
 
 
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 app.post("/api/certificates", upload.single("image"), async (req, res) => {
   try {
-    console.log("REQ.BODY:", req.body);       // log request body
-    console.log("REQ.FILE:", req.file);       // log uploaded file
-
     const { studentId, name, url, date, category, issuer } = req.body;
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    // ✅ Ensure Cloudinary URL exists
     let imageUrl = "";
-    if (req.file && req.file.path) {
-      imageUrl = req.file.path;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "student-hub-uploads"
+      });
+      imageUrl = result.secure_url;
     } else if (req.body.image) {
       imageUrl = req.body.image;
     } else {
       return res.status(400).json({ error: "No image provided" });
     }
 
-    const newCert = {
-      name,
-      image: imageUrl,
-      url,
-      date,
-      category,
-      issuer,
-      submittedAt: new Date()
-    };
-
+    const newCert = { name, image: imageUrl, url, date, category, issuer, submittedAt: new Date() };
     student.personalCertificates = student.personalCertificates || [];
     student.personalCertificates.push(newCert);
     await student.save();
 
-    console.log("Certificate saved successfully!");
     res.status(201).json({ message: "Certificate added", certificate: newCert });
   } catch (error) {
-    console.error("UPLOAD ERROR:", error);   // log full error
+    console.error("UPLOAD ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 app.delete("/api/certificates/:studentId/:certificateId", async (req, res) => {
