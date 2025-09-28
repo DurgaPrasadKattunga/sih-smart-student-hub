@@ -13,27 +13,29 @@ const College = require("./models/College");
 const Group = require("./models/Group");
 const Message = require("./models/Message");
 
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+// ✅ Cloudinary Config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Multer setup for file uploads - save to disk
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname) || "";
-    cb(null, unique + ext);
+// ✅ Replace disk storage with Cloudinary Storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "student-hub-uploads", // any folder name you like
+    allowed_formats: ["jpg", "jpeg", "png", "pdf"],
   },
 });
 const upload = multer({ storage });
+
 
 // Connect to MongoDB
 connectDB();
@@ -52,8 +54,7 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-// Serve uploaded files
-app.use('/uploads', express.static(uploadsDir));
+
 
 // ---------------------
 // Basic routes
@@ -236,12 +237,29 @@ app.post("/api/teacher/login", async (req, res) => {
 // ---------------------
 app.post("/api/academic-certificates", upload.single("image"), async (req, res) => {
   try {
-    const { studentId, domain, certificateName, certificateUrl, date, issuedBy, description, skills, duration, location, organizationType } = req.body;
+    const {
+      studentId,
+      domain,
+      certificateName,
+      certificateUrl,
+      date,
+      issuedBy,
+      description,
+      skills,
+      duration,
+      location,
+      organizationType
+    } = req.body;
 
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+    const imageUrl = req.file?.path || req.body.image;
+
+    // Safe skills parsing
+    let skillsArr = [];
+    try { skillsArr = skills ? JSON.parse(skills) : []; } catch (e) { skillsArr = []; }
+
     const newCert = {
       domain,
       certificateName,
@@ -250,7 +268,7 @@ app.post("/api/academic-certificates", upload.single("image"), async (req, res) 
       date,
       issuedBy,
       description,
-      skills: skills ? JSON.parse(skills) : [],
+      skills: skillsArr,
       duration,
       location,
       organizationType,
@@ -268,7 +286,7 @@ app.post("/api/academic-certificates", upload.single("image"), async (req, res) 
   }
 });
 
-// Fetch student's academic certificates
+
 app.get("/api/academic-certificates/:studentId", async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -289,9 +307,8 @@ app.delete("/api/academic-certificates/:studentId/:certificateId", async (req, r
 
     const beforeCount = (student.academicCertificates || []).length;
     student.academicCertificates = (student.academicCertificates || []).filter((c) => String(c._id) !== String(certificateId));
-    const afterCount = student.academicCertificates.length;
 
-    if (beforeCount === afterCount) {
+    if (beforeCount === student.academicCertificates.length) {
       return res.status(404).json({ error: "Certificate not found" });
     }
 
@@ -341,9 +358,9 @@ app.get('/api/admin/students', async (req, res) => {
 // ---------------------
 app.get('/api/review/academic-certificates', async (req, res) => {
   try {
-    // Flatten pending certificates across students for review listing
     const students = await Student.find({}, { name: 1, studentId: 1, academicCertificates: 1 }).lean();
     const items = [];
+
     for (const s of students) {
       for (const c of (s.academicCertificates || [])) {
         if (c.status === 'pending') {
@@ -353,12 +370,12 @@ app.get('/api/review/academic-certificates', async (req, res) => {
             certificateId: String(c._id),
             domain: c.domain,
             certificateName: c.certificateName,
-            image: c.image,
+            image: c.image || '', // Cloudinary URL
             certificateUrl: c.certificateUrl,
             date: c.date,
             issuedBy: c.issuedBy,
             description: c.description,
-            skills: c.skills,
+            skills: c.skills || [],
             duration: c.duration,
             location: c.location,
             organizationType: c.organizationType,
@@ -367,11 +384,13 @@ app.get('/api/review/academic-certificates', async (req, res) => {
         }
       }
     }
+
     res.json(items);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 app.post('/api/review/academic-certificates/:studentId/:certificateId/approve', async (req, res) => {
   try {
@@ -379,12 +398,15 @@ app.post('/api/review/academic-certificates/:studentId/:certificateId/approve', 
     const { feedback } = req.body;
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: 'Student not found' });
+
     const cert = (student.academicCertificates || []).find(c => String(c._id) === String(certificateId));
     if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
     cert.status = 'approved';
     cert.feedback = feedback || '';
     cert.reviewedAt = new Date();
     await student.save();
+
     res.json({ message: 'Certificate approved' });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -397,12 +419,15 @@ app.post('/api/review/academic-certificates/:studentId/:certificateId/reject', a
     const { feedback } = req.body;
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: 'Student not found' });
+
     const cert = (student.academicCertificates || []).find(c => String(c._id) === String(certificateId));
     if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
     cert.status = 'rejected';
     cert.feedback = feedback || '';
     cert.reviewedAt = new Date();
     await student.save();
+
     res.json({ message: 'Certificate rejected' });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -417,11 +442,24 @@ app.get("/api/certificates/:studentId", async (req, res) => {
     const { studentId } = req.params;
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: "Student not found" });
-    res.json(student.personalCertificates || []);
+
+    // Ensure all certificate images are direct Cloudinary URLs
+    const certificates = (student.personalCertificates || []).map(cert => ({
+      _id: cert._id,
+      name: cert.name,
+      image: cert.image || "",        // Cloudinary URL
+      url: cert.url || "",
+      date: cert.date || "",
+      category: cert.category || "",
+      issuer: cert.issuer || ""
+    }));
+
+    res.json(certificates);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 app.post("/api/certificates", upload.single("image"), async (req, res) => {
   try {
@@ -429,7 +467,8 @@ app.post("/api/certificates", upload.single("image"), async (req, res) => {
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image;
+    // ✅ Cloudinary URL
+    const imageUrl = req.file ? req.file.path : req.body.image;
 
     const newCert = {
       name,
@@ -449,6 +488,7 @@ app.post("/api/certificates", upload.single("image"), async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 app.delete("/api/certificates/:studentId/:certificateId", async (req, res) => {
   try {
@@ -499,7 +539,8 @@ app.put(
       const student = await Student.findOne({ studentId });
       if (!student) return res.status(404).json({ error: "Student not found" });
 
-      const toUrl = (file) => (file ? `/uploads/${file.filename}` : undefined);
+      // ✅ Updated to Cloudinary URLs
+      const toUrl = (file) => (file ? file.path : undefined);
 
       const fileFields = [
         "profileImage",
@@ -521,13 +562,12 @@ app.put(
 
       student.profile = student.profile || {};
 
-      // Handle files first
+      // Handle files
       for (const field of fileFields) {
         const file = req.files && req.files[field] && req.files[field][0];
         if (file) {
           student.profile[field] = toUrl(file);
         } else if (typeof req.body[field] === "string" && req.body[field].length > 0) {
-          // allow updating with existing data URLs
           student.profile[field] = req.body[field];
         }
       }
@@ -546,6 +586,7 @@ app.put(
     }
   }
 );
+
 
 // ---------------------
 // Projects
