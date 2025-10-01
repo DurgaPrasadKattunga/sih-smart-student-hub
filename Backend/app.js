@@ -16,6 +16,7 @@ const Message = require("./models/Message");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
+
 // ✅ Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -35,6 +36,17 @@ const storage = new CloudinaryStorage({
   },
 });
 const upload = multer({ storage });
+
+// (Deprecated) Local disk storage for personal certificates - replaced by Cloudinary
+// Keeping the definitions commented for reference. All personal certs now use Cloudinary `upload`.
+// const personalStorage = multer.diskStorage({
+//   destination: (req, file, cb) => cb(null, "uploads/"),
+//   filename: (req, file, cb) => {
+//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+//     cb(null, uniqueSuffix + path.extname(file.originalname));
+//   },
+// });
+// const personalUpload = multer({ storage: personalStorage });
 
 
 // Connect to MongoDB
@@ -460,40 +472,50 @@ app.get("/api/certificates/:studentId", async (req, res) => {
   }
 });
 
-
-
-
-app.post("/api/certificates", upload.single("image"), async (req, res) => {
+app.post(
+  "/api/certificates",
+  (req, res, next) => {
+    // Handle multer/cloudinary errors explicitly to avoid 500s
+    upload.single("image")(req, res, (err) => {
+      if (err) {
+        console.error("❌ Personal certificate upload error:", err);
+        return res.status(400).json({ error: err.message || "Upload failed" });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
   try {
     const { studentId, name, url, date, category, issuer } = req.body;
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ error: "Student not found" });
 
-    let imageUrl = "";
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "student-hub-uploads"
-      });
-      imageUrl = result.secure_url;
-    } else if (req.body.image) {
-      imageUrl = req.body.image;
-    } else {
-      return res.status(400).json({ error: "No image provided" });
-    }
+    // Use Cloudinary URL when a file is uploaded; fallback to provided image URL
+    const imageUrl = req.file?.path || req.body.image;
 
-    const newCert = { name, image: imageUrl, url, date, category, issuer, submittedAt: new Date() };
+    const newCert = {
+      name,
+      image: imageUrl,
+      url: url || "",
+      date: date ? new Date(date) : null,
+      category,
+      issuer,
+      submittedAt: new Date(),
+    };
+
     student.personalCertificates = student.personalCertificates || [];
     student.personalCertificates.push(newCert);
     await student.save();
 
     res.status(201).json({ message: "Certificate added", certificate: newCert });
   } catch (error) {
-    console.error("UPLOAD ERROR:", error);
-    res.status(500).json({ error: error.message });
+    console.error("❌ Personal certificate save error:", error);
+    res.status(400).json({ error: error.message });
   }
 });
 
-
+const UPLOADS_FOLDER = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(UPLOADS_FOLDER));
 
 app.delete("/api/certificates/:studentId/:certificateId", async (req, res) => {
   try {
