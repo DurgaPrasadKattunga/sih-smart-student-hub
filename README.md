@@ -64,8 +64,8 @@ Teachers can analyze student growth based on projects, certifications, coding pr
 Admin Module
 
 Login Credentials
-Email: adminsekhar@gmail.com
+Email: ++++++++++++++++++++
 
-Password: admin
+Password: ************
 
 Admins are responsible for managing the overall system. They can map students to faculty members, manage user accounts, monitor system workflow, and maintain platform operations.
