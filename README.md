@@ -4,6 +4,12 @@ Smart Student Hub is a centralized, AI-powered academic and career growth platfo
 
 This project is designed around the vision of creating a complete and verifiable student profile that supports institutional reporting, placement readiness, and long-term academic tracking.
 
+## Live Deployment
+
+- Web app: https://smart-student-hub.me
+- Purpose: production deployment for the Smart Student Hub platform
+
+
 ## Problem Statement
 
 Most institutions still store student achievements across disconnected systems, spreadsheets, and paper documents. This causes:
