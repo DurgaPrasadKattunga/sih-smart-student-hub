@@ -64,9 +64,18 @@ const AcademicCertificatesNew = ({ studentData }) => {
   useEffect(() => {
     if (studentData && studentData.studentId) {
       fetchCertificates();
+      // Set up auto-refresh every 10 seconds to ensure dynamic updates
+      const intervalId = setInterval(fetchCertificates, 10000);
+      // Also refresh on page focus
+      const onFocus = () => fetchCertificates();
+      window.addEventListener('focus', onFocus);
+      
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener('focus', onFocus);
+      };
     }
   }, [studentData]);
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -83,9 +92,11 @@ const AcademicCertificatesNew = ({ studentData }) => {
     if (!studentData || !studentData.studentId) return;
     try {
       const response = await api.get(`/api/academic-certificates/${studentData.studentId}`);
-      setCertificates(response.data);
+      setCertificates(Array.isArray(response.data) ? response.data : []);
+      console.log(`[AcademicCertificatesNew] Fetched ${response.data.length || 0} certificates`);
     } catch (error) {
       console.error('Error fetching certificates:', error);
+      setCertificates([]);
     }
   };
 
@@ -109,6 +120,7 @@ const AcademicCertificatesNew = ({ studentData }) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
+      console.log('[AcademicCertificatesNew] Certificate uploaded successfully:', response.data);
       alert('Certificate submitted successfully for faculty review!');
       setShowAddForm(false);
       setFormData({
@@ -126,7 +138,11 @@ const AcademicCertificatesNew = ({ studentData }) => {
       });
       setSkillSearch('');
       setShowSkillDropdown(false);
-      fetchCertificates();
+      
+      // Refresh immediately and also schedule additional refreshes
+      await fetchCertificates();
+      // Extra refresh after 1 second to ensure database sync
+      setTimeout(() => fetchCertificates(), 1000);
     } catch (error) {
       console.error('Error adding certificate:', error);
       alert('Error submitting certificate: ' + (error.response?.data?.error || error.message));
@@ -144,8 +160,12 @@ const AcademicCertificatesNew = ({ studentData }) => {
   const handleDeleteCertificate = async (certificateId) => {
     try {
       await api.delete(`/api/academic-certificates/${studentData.studentId}/${certificateId}`);
+      console.log(`[AcademicCertificatesNew] Certificate deleted: ${certificateId}`);
       alert('Certificate deleted successfully!');
-      fetchCertificates();
+      // Refresh immediately after deletion
+      await fetchCertificates();
+      // Extra refresh after 500ms
+      setTimeout(() => fetchCertificates(), 500);
     } catch (error) {
       console.error('Error deleting certificate:', error);
       alert('Error deleting certificate: ' + (error.response?.data?.error || error.message));

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import AdminFacultyRegister from './AdminFacultyRegister';
 
 const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
   const [showTeacherStudentModal, setShowTeacherStudentModal] = useState(false);
   const [facultyFilterCollege, setFacultyFilterCollege] = useState('gmrit');
   const [facultyFilterDepartment, setFacultyFilterDepartment] = useState('ALL');
+  const [showFacultyRegisterModal, setShowFacultyRegisterModal] = useState(false);
   const [adminProfileForm, setAdminProfileForm] = useState({
     name: '',
     email: '',
@@ -909,6 +911,7 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
                         <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Email</th>
                         <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Department</th>
                         <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>College</th>
+                        <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Certificates</th>
                         <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Group Count</th>
                         <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Actions</th>
                       </tr>
@@ -932,6 +935,14 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
                             </span>
                           </td>
                           <td className={`px-6 py-4 whitespace-nowrap text-sm ${dark ? 'text-gray-400' : 'text-gray-600'}`}>{student.college}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${student.academicCertificates?.length > 0 ? (dark ? 'bg-green-500/20 text-green-300' : 'bg-green-100 text-green-800') : (dark ? 'bg-gray-500/20 text-gray-300' : 'bg-gray-100 text-gray-700')}`}>
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.657 6.243A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                              </svg>
+                              {student.academicCertificates?.length || 0}
+                            </span>
+                          </td>
                           <td className={`px-6 py-4 whitespace-nowrap ${dark ? 'text-gray-200' : 'text-gray-800'}`}>{getStudentGroupCount(student.studentId)}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2 min-w-[150px]">
@@ -953,7 +964,7 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
                       ))}
                       {visibleStudents.length === 0 && (
                         <tr>
-                          <td colSpan="7" className={`px-6 py-8 text-center text-sm ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <td colSpan="8" className={`px-6 py-8 text-center text-sm ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
                             No students found for this search.
                           </td>
                         </tr>
@@ -973,6 +984,15 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
                   <p className={`mt-1 ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Manage and view all faculty members</p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowFacultyRegisterModal(true)}
+                    className="px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 shadow-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Faculty
+                  </button>
                   <div className={`px-4 py-2 rounded-xl ${dark ? 'bg-green-500/10' : 'bg-gradient-to-r from-green-50 to-emerald-50'}`}>
                     <span className={`text-sm font-medium ${dark ? 'text-green-400' : 'text-green-700'}`}>{visibleTeachers.length} / {totalTeachers} Faculty</span>
                   </div>
@@ -1906,6 +1926,19 @@ const AdminDashboard = ({ adminData, onLogout, onAdminUpdate }) => {
           </div>
         </div>
       )}
+
+      {/* Faculty Registration Modal */}
+      <AdminFacultyRegister
+        isOpen={showFacultyRegisterModal}
+        onClose={() => setShowFacultyRegisterModal(false)}
+        onSuccess={() => {
+          fetchData();
+          setTeacherSearch('');
+          setFacultyFilterDepartment('ALL');
+        }}
+        dark={dark}
+        colleges={colleges}
+      />
     </div>
   );
 };

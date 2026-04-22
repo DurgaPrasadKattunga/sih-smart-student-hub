@@ -112,14 +112,20 @@ async function enforceAdminWhitelist() {
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
+
+// Parse allowed origins from environment
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [
+      'http://localhost:5173',                    // local dev
+      'https://sih-smart-student-hub-2.onrender.com', // old Render deployment
+      'https://smart-student-hub.me',            // custom domain
+      'https://www.smart-student-hub.me'         // www variant
+    ];
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      'http://localhost:5173',
-      'https://sih-smart-student-hub-2.onrender.com',
-      'https://smart-student-hub.me',
-      'https://www.smart-student-hub.me'
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -192,12 +198,7 @@ connectDB().then(() => {
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:5173',                     // local dev
-    'https://sih-smart-student-hub-2.onrender.com', // old Render deployment
-    'https://smart-student-hub.me',             // your custom domain
-    'https://www.smart-student-hub.me'          // www variant
-  ],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -1031,6 +1032,7 @@ app.get('/api/admin/students', async (req, res) => {
       'profile.profileImage': 1,
       'profile.mobileNumber': 1,
       'profile.collegeEmail': 1,
+      'academicCertificates': 1,
     });
     res.json(students);
   } catch (error) {
@@ -1150,6 +1152,89 @@ app.delete('/api/admin/teachers/:teacherId', async (req, res) => {
     res.json({ message: 'Teacher deleted successfully' });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/faculty/register
+ * @desc    Register a new faculty member (admin only)
+ * @access  Admin
+ */
+app.post("/api/admin/faculty/register", async (req, res) => {
+  try {
+    const { password, confirmPassword, experience, ...facultyData } = req.body;
+
+    // Validate required fields
+    const requiredFields = ['name', 'email', 'phoneNumber', 'department', 'college'];
+    for (const field of requiredFields) {
+      if (!facultyData[field]) {
+        return res.status(400).json({ error: `${field} is required` });
+      }
+    }
+
+    // Validate password
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: 'Passwords do not match' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    // Check if email already exists
+    const existingTeacher = await Teacher.findOne({ 
+      email: new RegExp('^' + escapeRegExp(facultyData.email) + '$', 'i') 
+    });
+
+    if (existingTeacher) {
+      return res.status(400).json({ error: 'Email already exists in the system' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new teacher/faculty member
+    const teacher = new Teacher({
+      ...facultyData,
+      password: hashedPassword,
+      experience: parseInt(experience) || 0,
+      designation: facultyData.designation || 'Assistant Professor'
+    });
+
+    await teacher.save();
+
+    res.status(201).json({
+      message: 'Faculty member registered successfully',
+      teacherId: teacher.teacherId,
+      name: teacher.name,
+      email: teacher.email,
+      department: teacher.department,
+      college: teacher.college,
+      designation: teacher.designation
+    });
+  } catch (error) {
+    console.error('Error registering faculty:', error);
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ error: `${field} already exists in the system` });
+    }
+
+    // Handle validation errors
+    if (error?.name === 'ValidationError') {
+      const details = Object.values(error.errors || {}).map((e) => e.message);
+      return res.status(400).json({ error: 'Validation failed', details });
+    }
+
+    res.status(400).json({ 
+      error: error.message || 'Failed to register faculty member',
+      details: error?.stack ? [error.message] : undefined 
+    });
   }
 });
 

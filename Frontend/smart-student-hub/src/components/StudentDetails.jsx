@@ -10,21 +10,37 @@ const StudentDetails = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const response = await api.get(`/api/students/${studentId}`);
-        setStudent(response.data);
-      } catch (error) {
-        console.error('Error fetching student:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (studentId) {
-      fetchStudent();
+  const fetchStudent = async () => {
+    try {
+      const response = await api.get(`/api/students/${studentId}`);
+      setStudent(response.data);
+      if (loading) setLoading(false);
+      console.log(`[StudentDetails] Fetched student data with ${response.data.academicCertificates?.length || 0} academic certificates`);
+    } catch (error) {
+      console.error('Error fetching student:', error);
+      if (loading) setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (!studentId) return;
+    
+    fetchStudent();
+    
+    // Set up auto-refresh every 10 seconds to ensure dynamic updates
+    const intervalId = setInterval(fetchStudent, 10000);
+    
+    // Also refresh on page focus
+    const onFocus = () => {
+      console.log('[StudentDetails] Page focused, refreshing data...');
+      fetchStudent();
+    };
+    window.addEventListener('focus', onFocus);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [studentId]);
 
   if (loading) {
