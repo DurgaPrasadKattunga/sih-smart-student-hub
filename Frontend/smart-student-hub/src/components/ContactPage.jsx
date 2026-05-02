@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import PoliciesModal from "./PoliciesModal";
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const ContactPage = () => {
     subject: "",
     message: ""
   });
+  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
 
   const teamMembers = [
     {
@@ -281,11 +283,14 @@ const ContactPage = () => {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-gray-400 mb-6">© 2026 Smart Student Hub. All rights reserved.</p>
           <div className="flex justify-center gap-6">
-            <button onClick={() => navigate("/privacy")} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</button>
-            <button onClick={() => navigate("/terms")} className="text-gray-400 hover:text-white transition-colors">Terms of Service</button>
+            <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</button>
+            <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-gray-400 hover:text-white transition-colors">Terms of Service</button>
           </div>
         </div>
       </motion.div>
+
+      {/* Policies Modal */}
+      <PoliciesModal isOpen={isPoliciesModalOpen} onClose={() => setIsPoliciesModalOpen(false)} />
     </div>
   );
 };

@@ -33,6 +33,7 @@ import ContactPageLight from "./components/ContactPageLight";
 import PrivacyPolicyLight from "./components/PrivacyPolicyLight";
 import TermsOfServiceLight from "./components/TermsOfServiceLight";
 import api from "./services/api";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Page transition wrapper
 const PageTransition = ({ children }) => (
@@ -360,6 +361,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <AnimatedRoutes
         studentData={studentData}
         teacherData={teacherData}

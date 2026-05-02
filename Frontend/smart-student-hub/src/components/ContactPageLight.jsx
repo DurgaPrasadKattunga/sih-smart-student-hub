@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import PoliciesModalLight from "./PoliciesModalLight";
 
 const ContactPageLight = () => {
   const navigate = useNavigate();
   const [selectedMember, setSelectedMember] = useState(null);
+  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -346,12 +348,15 @@ const ContactPageLight = () => {
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-slate-600 mb-6">© 2026 Smart Student Hub. All rights reserved.</p>
             <div className="flex justify-center gap-6">
-              <button onClick={() => navigate("/privacy")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Privacy Policy</button>
-              <button onClick={() => navigate("/terms")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Terms of Service</button>
+              <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Privacy Policy</button>
+              <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Terms of Service</button>
             </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Policies Modal */}
+      <PoliciesModalLight isOpen={isPoliciesModalOpen} onClose={() => setIsPoliciesModalOpen(false)} />
     </div>
   );
 };
