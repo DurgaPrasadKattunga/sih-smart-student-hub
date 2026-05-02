@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "./Logo";
 
 const TermsOfServiceLight = () => {
   const navigate = useNavigate();
@@ -112,8 +113,23 @@ const TermsOfServiceLight = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Back Button */}
-      <div className="fixed top-6 left-6 z-40">
+      {/* Navigation Header with Logo */}
+      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-blue-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Logo variant="compact" size="medium" />
+            <button
+              onClick={() => navigate("/")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all duration-300"
+            >
+              ← Back
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Existing Back Button - Hide on larger screens */}
+      <div className="sm:hidden fixed top-20 left-6 z-40">
         <button
           onClick={() => navigate("/")}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all duration-300"
