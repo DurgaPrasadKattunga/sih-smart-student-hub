@@ -294,20 +294,6 @@ const ContactPage = () => {
             <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition-all duration-300">GitHub</a>
             <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition-all duration-300">LinkedIn</a>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-            <div className="bg-white/5 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Email</p>
-              <a href="mailto:malipeddisekhar63@gmail.com" className="text-white hover:text-blue-400 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
-            </div>
-            <div className="bg-white/5 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Phone</p>
-              <a href="tel:+919110573442" className="text-white hover:text-blue-400 transition-colors font-semibold">+91 91105 73442</a>
-            </div>
-            <div className="bg-white/5 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Support Email</p>
-              <a href="mailto:contact@smartstudenthub.edu" className="text-white hover:text-blue-400 transition-colors font-semibold text-sm break-all">contact@smartstudenthub.edu</a>
-            </div>
-          </div>
           <div className="flex justify-center gap-6">
             <button onClick={() => navigate("/privacy")} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</button>
             <button onClick={() => navigate("/terms")} className="text-gray-400 hover:text-white transition-colors">Terms of Service</button>

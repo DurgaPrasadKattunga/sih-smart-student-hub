@@ -359,20 +359,6 @@ const ContactPageLight = () => {
               <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-900 rounded-lg transition-all duration-300 font-medium">GitHub</a>
               <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-900 rounded-lg transition-all duration-300 font-medium">LinkedIn</a>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-              <div className="bg-slate-100 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Email</p>
-                <a href="mailto:malipeddisekhar63@gmail.com" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
-              </div>
-              <div className="bg-slate-100 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Phone</p>
-                <a href="tel:+919110573442" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold">+91 91105 73442</a>
-              </div>
-              <div className="bg-slate-100 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Support Email</p>
-                <a href="mailto:contact@smartstudenthub.edu" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold text-sm break-all">contact@smartstudenthub.edu</a>
-              </div>
-            </div>
             <div className="flex justify-center gap-6">
               <button onClick={() => navigate("/privacy")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Privacy Policy</button>
               <button onClick={() => navigate("/terms")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Terms of Service</button>
