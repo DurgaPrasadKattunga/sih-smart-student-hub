@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import PoliciesModal from "./PoliciesModal";
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -11,7 +10,6 @@ const ContactPage = () => {
     subject: "",
     message: ""
   });
-  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
 
   const teamMembers = [
     {
@@ -31,7 +29,7 @@ const ContactPage = () => {
     {
       name: "Sekhar",
       role: "Frontend Developer",
-      description: "Crafting beautiful and responsive user interfaces with modern React and Tailwind CSS.",
+      description: "MALIPEDDI SEKHAR - React Frontend Developer. Crafting beautiful and responsive user interfaces with modern React and Tailwind CSS.",
       icon: "🎨",
       color: "from-purple-500 to-pink-500"
     }
@@ -41,14 +39,14 @@ const ContactPage = () => {
     {
       title: "General Inquiries",
       description: "For product information and general questions",
-      contact: "contact@smartstudenthub.edu",
+      contact: "malipeddisekhar63@gmail.com",
       icon: "📧",
       color: "blue"
     },
     {
       title: "Technical Support",
       description: "For technical issues and platform support",
-      contact: "+91 9876 543 210",
+      contact: "+91 91105 73442",
       icon: "🔧",
       color: "green"
     },
@@ -185,11 +183,21 @@ const ContactPage = () => {
             <p className="text-gray-300 max-w-2xl mx-auto text-lg">
               A passionate team of developers, designers, and innovators dedicated to revolutionizing student management systems. We combine cutting-edge technology with user-centric design to create an exceptional platform for students, teachers, and administrators.
             </p>
+            <div className="mt-6 flex justify-center gap-4 flex-wrap max-w-2xl mx-auto">
+              <div className="bg-red-500/20 rounded-lg p-3 flex-1 min-w-[150px]">
+                <p className="text-gray-300 text-sm mb-1">Email</p>
+                <a href="mailto:malipeddisekhar63@gmail.com" className="text-white hover:text-red-300 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
+              </div>
+              <div className="bg-red-500/20 rounded-lg p-3 flex-1 min-w-[150px]">
+                <p className="text-gray-300 text-sm mb-1">Phone</p>
+                <a href="tel:+919110573442" className="text-white hover:text-red-300 transition-colors font-semibold">+91 91105 73442</a>
+              </div>
+            </div>
             <div className="mt-8 flex justify-center gap-4">
-              <a href="#" className="px-6 py-2 bg-red-500/50 hover:bg-red-500/70 border border-red-500/50 text-white rounded-lg transition-all duration-300">
+              <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-red-500/50 hover:bg-red-500/70 border border-red-500/50 text-white rounded-lg transition-all duration-300">
                 GitHub
               </a>
-              <a href="#" className="px-6 py-2 bg-red-500/50 hover:bg-red-500/70 border border-red-500/50 text-white rounded-lg transition-all duration-300">
+              <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-red-500/50 hover:bg-red-500/70 border border-red-500/50 text-white rounded-lg transition-all duration-300">
                 LinkedIn
               </a>
             </div>
@@ -281,16 +289,34 @@ const ContactPage = () => {
         className="border-t border-white/10 mt-20 py-12 px-6"
       >
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-gray-400 mb-6">© 2026 Smart Student Hub. All rights reserved.</p>
-          <div className="flex justify-center gap-6">
-            <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</button>
-            <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-gray-400 hover:text-white transition-colors">Terms of Service</button>
+          <p className="text-gray-300 mb-4">Have questions or suggestions? We'd love to hear from you. Connect with us on these pages!</p>
+          <div className="flex justify-center gap-6 mb-8">
+            <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition-all duration-300">GitHub</a>
+            <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition-all duration-300">LinkedIn</a>
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Email</p>
+              <a href="mailto:malipeddisekhar63@gmail.com" className="text-white hover:text-blue-400 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Phone</p>
+              <a href="tel:+919110573442" className="text-white hover:text-blue-400 transition-colors font-semibold">+91 91105 73442</a>
+            </div>
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Support Email</p>
+              <a href="mailto:contact@smartstudenthub.edu" className="text-white hover:text-blue-400 transition-colors font-semibold text-sm break-all">contact@smartstudenthub.edu</a>
+            </div>
+          </div>
+          <div className="flex justify-center gap-6">
+            <button onClick={() => navigate("/privacy")} className="text-gray-400 hover:text-white transition-colors">Privacy Policy</button>
+            <button onClick={() => navigate("/terms")} className="text-gray-400 hover:text-white transition-colors">Terms of Service</button>
+          </div>
+          <p className="text-gray-400 mt-6">© 2026 Smart Student Hub. All rights reserved.</p>
         </div>
       </motion.div>
 
-      {/* Policies Modal */}
-      <PoliciesModal isOpen={isPoliciesModalOpen} onClose={() => setIsPoliciesModalOpen(false)} />
+
     </div>
   );
 };

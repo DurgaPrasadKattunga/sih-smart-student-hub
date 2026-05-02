@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import PoliciesModalLight from "./PoliciesModalLight";
 
 const ContactPageLight = () => {
   const navigate = useNavigate();
   const [selectedMember, setSelectedMember] = useState(null);
-  const [isPoliciesModalOpen, setIsPoliciesModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -41,10 +39,10 @@ const ContactPageLight = () => {
       id: 3,
       name: "Sekhar",
       role: "Frontend Developer",
-      description: "Crafting beautiful and responsive user interfaces with modern React and Tailwind CSS.",
+      description: "MALIPEDDI SEKHAR - React Frontend Developer. Crafting beautiful and responsive user interfaces with modern React and Tailwind CSS.",
       icon: "🎨",
       color: "purple",
-      fullDescription: "Sekhar brings beautiful design and smooth interactions to life. With modern React practices and Tailwind CSS expertise, they create engaging user experiences.",
+      fullDescription: "MALIPEDDI SEKHAR specializes in bringing beautiful design and smooth interactions to life. With modern React practices and Tailwind CSS expertise, they create engaging user experiences.",
       expertise: ["React.js", "Tailwind CSS", "UI/UX Design", "Animation"],
       email: "sekhar@smartstudenthub.edu"
     }
@@ -54,14 +52,14 @@ const ContactPageLight = () => {
     {
       title: "General Inquiries",
       description: "For product information and general questions",
-      contact: "contact@smartstudenthub.edu",
+      contact: "malipeddisekhar63@gmail.com",
       icon: "📧",
       color: "blue"
     },
     {
       title: "Technical Support",
       description: "For technical issues and platform support",
-      contact: "+91 9876 543 210",
+      contact: "+91 91105 73442",
       icon: "🔧",
       color: "green"
     },
@@ -250,11 +248,21 @@ const ContactPageLight = () => {
               <p className="text-slate-700 max-w-2xl mx-auto text-lg">
                 A passionate team of developers, designers, and innovators dedicated to revolutionizing student management systems. We combine cutting-edge technology with user-centric design to create an exceptional platform.
               </p>
+              <div className="mt-6 flex justify-center gap-4 flex-wrap max-w-2xl mx-auto">
+                <div className="bg-blue-100 rounded-lg p-3 flex-1 min-w-[150px]">
+                  <p className="text-slate-600 text-sm mb-1">Email</p>
+                  <a href="mailto:malipeddisekhar63@gmail.com" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
+                </div>
+                <div className="bg-blue-100 rounded-lg p-3 flex-1 min-w-[150px]">
+                  <p className="text-slate-600 text-sm mb-1">Phone</p>
+                  <a href="tel:+919110573442" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold">+91 91105 73442</a>
+                </div>
+              </div>
               <div className="mt-8 flex justify-center gap-4">
-                <a href="#" className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 font-medium">
+                <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 font-medium">
                   GitHub
                 </a>
-                <a href="#" className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 font-medium">
+                <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 font-medium">
                   LinkedIn
                 </a>
               </div>
@@ -346,17 +354,34 @@ const ContactPageLight = () => {
           className="border-t border-slate-200 mt-20 py-12 px-6 bg-slate-50"
         >
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-slate-600 mb-6">© 2026 Smart Student Hub. All rights reserved.</p>
-            <div className="flex justify-center gap-6">
-              <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Privacy Policy</button>
-              <button onClick={() => { scrollToTop(); setIsPoliciesModalOpen(true); }} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Terms of Service</button>
+            <p className="text-slate-700 mb-4">Have questions or suggestions? We'd love to hear from you. Connect with us on these pages!</p>
+            <div className="flex justify-center gap-6 mb-8">
+              <a href="https://github.com/malipeddisekhar" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-900 rounded-lg transition-all duration-300 font-medium">GitHub</a>
+              <a href="https://www.linkedin.com/in/malipeddi-sekhar-08650630b/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-900 rounded-lg transition-all duration-300 font-medium">LinkedIn</a>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
+              <div className="bg-slate-100 rounded-lg p-4">
+                <p className="text-slate-600 text-sm">Email</p>
+                <a href="mailto:malipeddisekhar63@gmail.com" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold text-sm break-all">malipeddisekhar63@gmail.com</a>
+              </div>
+              <div className="bg-slate-100 rounded-lg p-4">
+                <p className="text-slate-600 text-sm">Phone</p>
+                <a href="tel:+919110573442" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold">+91 91105 73442</a>
+              </div>
+              <div className="bg-slate-100 rounded-lg p-4">
+                <p className="text-slate-600 text-sm">Support Email</p>
+                <a href="mailto:contact@smartstudenthub.edu" className="text-slate-900 hover:text-blue-600 transition-colors font-semibold text-sm break-all">contact@smartstudenthub.edu</a>
+              </div>
+            </div>
+            <div className="flex justify-center gap-6">
+              <button onClick={() => navigate("/privacy")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Privacy Policy</button>
+              <button onClick={() => navigate("/terms")} className="text-slate-600 hover:text-slate-900 transition-colors font-medium">Terms of Service</button>
+            </div>
+            <p className="text-slate-600 mt-6">© 2026 Smart Student Hub. All rights reserved.</p>
           </div>
         </motion.div>
       </div>
 
-      {/* Policies Modal */}
-      <PoliciesModalLight isOpen={isPoliciesModalOpen} onClose={() => setIsPoliciesModalOpen(false)} />
     </div>
   );
 };
