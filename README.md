@@ -177,6 +177,18 @@ Build frontend:
 npm run build
 ```
 
+### Mobile App (Optional)
+
+The Expo mobile client is in `SmartStudentHubMobile/`.
+
+```bash
+cd SmartStudentHubMobile
+npm install
+npx expo start
+```
+
+Use Expo Go to scan the QR code, or press `a` for an Android emulator. The mobile app uses the same backend API as the web application.
+
 ## Suggested Environment Configuration
 
 Configure environment variables in backend and frontend based on your deployment setup, including:
@@ -202,6 +214,28 @@ Configure environment variables in backend and frontend based on your deployment
 - Restrict admin-level routes and sensitive actions
 - Keep secrets only in environment files, never hard-code credentials
 - Validate uploaded documents before storage and processing
+
+## Documentation
+
+Read the documentation in this order:
+
+1. `README.md` - Project overview and local setup
+2. `QUICK_START.md` - LeetCode feature quick start
+3. `API_DOCUMENTATION.md` - LeetCode and search API reference
+4. `COMPONENT_ARCHITECTURE.md` - Frontend component structure
+5. `CERTIFICATE_SCAN_QUICK_START.md` - Certificate scanning quick start
+6. `CERTIFICATE_SCAN_VERIFICATION_DOCUMENTATION.md` - Certificate scanning technical details
+7. `CERTIFICATE_SCAN_VISUAL_GUIDE.md` - Certificate scanning workflow reference
+8. `CODECHEF_INTEGRATION.md` - CodeChef integration
+9. `LEETCODE_IMPLEMENTATION.md` - LeetCode implementation details
+
+### Authentication Documentation
+
+- `MICROSOFT_OAUTH_QUICKSTART.md` - Quick setup
+- `MICROSOFT_OAUTH_SETUP.md` - Detailed configuration
+- `MICROSOFT_OAUTH_IMPLEMENTATION.md` - Technical implementation
+- `MICROSOFT_OAUTH_TROUBLESHOOTING.md` - Troubleshooting
+- `MICROSOFT_OAUTH_CHECKLIST.md` - Deployment checklist
 
 ## Roadmap Possibilities
 
