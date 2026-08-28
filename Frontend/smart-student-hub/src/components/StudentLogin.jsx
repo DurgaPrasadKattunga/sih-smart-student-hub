@@ -88,7 +88,7 @@ const StudentLogin = ({ onLogin }) => {
   const handleMicrosoftLogin = () => {
     setIsLoading(true);
     // Redirect to backend Microsoft OAuth endpoint
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const backendUrl = import.meta.env.VITE_API_URL || 'https://sih-smart-student-hub-1.onrender.com';
     window.location.href = `${backendUrl}/auth/microsoft`;
   };
 

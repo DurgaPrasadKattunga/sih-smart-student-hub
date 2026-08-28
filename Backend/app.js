@@ -1527,6 +1527,7 @@ app.post('/api/scan-certificate/:studentId/:certificateId', async (req, res) => 
       );
       
       console.log('Scan completed:', scanResult.scanResult);
+      console.log('Name after QR scan:', scanResult.verificationDetails?.originalCertificateName || 'Not available');
       
       // Update certificate with scan results
       cert.scanStatus = 'scanned';
@@ -1541,6 +1542,9 @@ app.post('/api/scan-certificate/:studentId/:certificateId', async (req, res) => 
       return res.json({
         message: 'Certificate scanned successfully',
         scanResult: scanResult.scanResult,
+        originalCertificateName: scanResult.verificationDetails?.originalCertificateName
+          || scanResult.verificationDetails?.qrVerifiedStudentName
+          || null,
         verificationDetails: scanResult.verificationDetails
       });
     } catch (scanError) {
@@ -2145,7 +2149,7 @@ app.post('/api/chatbot', async (req, res) => {
       }))
     ];
 
-    const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"];
+    const models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
     let lastError = null;
 
     for (const modelName of models) {
@@ -2225,9 +2229,11 @@ app.post('/api/resume-analysis-upload', upload.single('resume'), async (req, res
       try {
         resumeText = await extractTextFromPDF(fileUrl);
       } catch (pdfError) {
-        console.warn(`[Resume Upload] PDF extraction failed: ${pdfError.message}, attempting fallback...`);
-        // Fallback: try alternative PDF extraction
-        resumeText = 'Unable to extract text from PDF. Please ensure the PDF contains selectable text (not scanned images).';
+        console.error(`[Resume Upload] PDF extraction failed: ${pdfError.message}`);
+        return res.status(400).json({
+          error: 'Could not extract text from the uploaded PDF.',
+          details: 'Please upload a PDF with selectable text or upload a clear resume image.'
+        });
       }
     } else if (fileType.startsWith('image/')) {
       console.log('[Resume Upload] Extracting text from image using OCR...');

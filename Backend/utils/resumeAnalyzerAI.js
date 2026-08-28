@@ -8,6 +8,173 @@ function getGroq() {
   return _groq;
 }
 
+function detectResumeRole(resumeText = '') {
+  const text = resumeText.toLowerCase();
+  const roles = [
+    {
+      id: 'mern-full-stack',
+      label: 'MERN / Full-Stack Web Development',
+      keywords: ['react', 'node.js', 'nodejs', 'express', 'mongodb', 'javascript', 'full-stack', 'full stack', 'rest api', 'jwt']
+    },
+    {
+      id: 'java-backend',
+      label: 'Java Backend Development',
+      keywords: ['java', 'spring boot', 'spring framework', 'hibernate', 'microservices']
+    },
+    {
+      id: 'python-data',
+      label: 'Python / Data Science',
+      keywords: ['python', 'pandas', 'numpy', 'tensorflow', 'pytorch', 'machine learning', 'data science']
+    },
+    {
+      id: 'cloud-devops',
+      label: 'Cloud / DevOps',
+      keywords: ['aws', 'azure', 'docker', 'kubernetes', 'terraform', 'jenkins', 'devops']
+    }
+  ];
+
+  const ranked = roles.map(role => ({
+    ...role,
+    score: role.keywords.reduce((total, keyword) => total + (text.includes(keyword) ? 1 : 0), 0)
+  })).sort((a, b) => b.score - a.score);
+  const primary = ranked[0]?.score > 0 ? ranked[0] : {
+    id: 'general-software',
+    label: 'Software Development',
+    keywords: [],
+    score: 0
+  };
+
+  return {
+    id: primary.id,
+    label: primary.label,
+    matchedKeywords: primary.keywords.filter(keyword => text.includes(keyword)),
+    confidence: primary.score
+  };
+}
+
+function calculateAtsScore(resumeText = '', role) {
+  const text = resumeText.toLowerCase();
+  const sectionScore = ['experience', 'education', 'projects', 'skills', 'certifications', 'achievements']
+    .reduce((score, section) => score + (new RegExp(`\\b${section}\\b`, 'i').test(text) ? 5 : 0), 0);
+  const contactScore = [/@/.test(text), /(?:github|linkedin)/i.test(text), /\+?\d[\d\s().-]{7,}/.test(text)]
+    .filter(Boolean).length * 3;
+  const roleScore = Math.min((role?.confidence || 0) * 3, 18);
+  const actionScore = Math.min((text.match(/\b(?:developed|built|integrated|engineered|delivered|implemented|solved|created)\b/gi) || []).length * 1.5, 10);
+  const quantifiedScore = Math.min((text.match(/\b\d+(?:\.\d+)?\s*(?:%|years?|months?|users?|projects?|apis?|features?)\b/gi) || []).length * 2, 8);
+  const lengthScore = text.length >= 1200 ? 6 : text.length >= 600 ? 3 : 0;
+
+  return Math.round(Math.min(100, sectionScore + contactScore + roleScore + actionScore + quantifiedScore + lengthScore));
+}
+
+function calculateResumeCategoryScores(resumeText = '', role) {
+  const text = resumeText.toLowerCase();
+  const has = pattern => pattern.test(text);
+  const technicalSkills = Math.min(10, 2 + Math.min(8, (role?.confidence || 0)));
+  const projects = has(/\bprojects?\b/) ? (has(/built|developed|engineered|implemented|platform|application/) ? 8 : 6) : 2;
+  const education = has(/\beducation\b|b\. ?tech|bachelor|degree|university|institute|college/) ? 8 : 3;
+  const experience = has(/\bexperience\b|\bintern(ship)?\b|employment/) ? 7 : 2;
+  const codingProfiles = has(/leetcode|codechef|hackerrank|geeksforgeeks|github/) ? 7 : 2;
+
+  return { technicalSkills, projects, education, experience, codingProfiles };
+}
+
+function recommendationText(item) {
+  return Object.values(item || {}).flatMap(value => Array.isArray(value) ? value : [value])
+    .filter(value => typeof value === 'string').join(' ').toLowerCase();
+}
+
+function getRoleFallbackRecommendations(roleId) {
+  const fallbacks = {
+    'mern-full-stack': {
+      recommendedCourses: [
+        { title: 'Full Stack Open', platform: 'University of Helsinki', courseUrl: 'https://fullstackopen.com/en/', instructor: 'University of Helsinki', level: 'intermediate', duration: '12 weeks', reason: 'Builds production-style React, Node.js, Express, REST API, and MongoDB skills.', free: true, tags: ['React', 'Node.js', 'Express', 'MongoDB'] },
+        { title: 'The Odin Project: Full Stack JavaScript', platform: 'The Odin Project', courseUrl: 'https://www.theodinproject.com/paths/full-stack-javascript', instructor: 'The Odin Project', level: 'intermediate', duration: '20 weeks', reason: 'Strengthens JavaScript, React, Node.js, databases, and full-stack project development.', free: true, tags: ['JavaScript', 'React', 'Node.js', 'Full Stack'] },
+        { title: 'React Tutorial', platform: 'freeCodeCamp', courseUrl: 'https://www.freecodecamp.org/learn/front-end-development-libraries/', instructor: 'freeCodeCamp', level: 'beginner', duration: '8 weeks', reason: 'Improves React fundamentals for frontend and MERN applications.', free: true, tags: ['React', 'JavaScript', 'Frontend'] },
+        { title: 'Node.js and Express.js Documentation', platform: 'Node.js', courseUrl: 'https://nodejs.org/en/learn', instructor: 'Node.js', level: 'intermediate', duration: '4 weeks', reason: 'Improves backend API development with Node.js and Express concepts.', free: true, tags: ['Node.js', 'Express', 'REST APIs'] },
+        { title: 'MongoDB University Developer Path', platform: 'MongoDB University', courseUrl: 'https://learn.mongodb.com/catalog', instructor: 'MongoDB', level: 'beginner', duration: '6 weeks', reason: 'Develops practical MongoDB data modeling and application integration skills.', free: true, tags: ['MongoDB', 'Database', 'JavaScript'] }
+        ,{ title: 'MERN Stack Tutorial', platform: 'freeCodeCamp', courseUrl: 'https://www.freecodecamp.org/news/mern-stack-tutorial/', instructor: 'freeCodeCamp', level: 'intermediate', duration: '6 weeks', reason: 'Combines MongoDB, Express, React, and Node.js in a complete web application.', free: true, tags: ['MERN', 'React', 'Node.js', 'MongoDB'] }
+        ,{ title: 'REST API Design and Development', platform: 'Microsoft Learn', courseUrl: 'https://learn.microsoft.com/en-us/training/browse/?terms=REST%20API', instructor: 'Microsoft Learn', level: 'intermediate', duration: '4 weeks', reason: 'Improves REST API design and backend integration for full-stack applications.', free: true, tags: ['REST APIs', 'Backend', 'JavaScript'] }
+      ],
+      recommendedInternships: [
+        { title: 'MERN Stack Developer Intern', company: 'MERN Stack startup roles', platform: 'Internshala', applyUrl: 'https://internshala.com/internships/mern-stack-development-internship/', matchReason: 'Directly matches React, Node.js, Express, MongoDB, and full-stack project experience.', requiredSkills: ['React', 'Node.js', 'Express', 'MongoDB'], matchedSkills: ['React', 'Node.js', 'Express', 'MongoDB'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' },
+        { title: 'Full Stack Web Development Intern', company: 'Software product startups', platform: 'LinkedIn', applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=full%20stack%20developer%20intern', matchReason: 'Matches full-stack web development and REST API project experience.', requiredSkills: ['JavaScript', 'React', 'Node.js'], matchedSkills: ['JavaScript', 'React', 'Node.js'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' }
+        ,{ title: 'React Developer Intern', company: 'Web product startups', platform: 'Internshala', applyUrl: 'https://internshala.com/internships/react.js-development-internship/', matchReason: 'Uses the React frontend skills shown in the resume.', requiredSkills: ['React', 'JavaScript'], matchedSkills: ['React', 'JavaScript'], stipend: 'Varies', duration: '3-6 months', type: 'remote', difficulty: 'intermediate' }
+        ,{ title: 'Node.js Developer Intern', company: 'Backend product startups', platform: 'LinkedIn', applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=node.js%20developer%20intern', matchReason: 'Matches Node.js, Express, and REST API experience.', requiredSkills: ['Node.js', 'Express', 'REST APIs'], matchedSkills: ['Node.js', 'Express', 'REST APIs'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' }
+        ,{ title: 'Backend Developer Intern', company: 'Early-stage technology companies', platform: 'Indeed', applyUrl: 'https://in.indeed.com/jobs?q=backend+developer+intern+node.js', matchReason: 'Builds on backend APIs and database work listed in the resume.', requiredSkills: ['Node.js', 'MongoDB', 'REST APIs'], matchedSkills: ['Node.js', 'MongoDB', 'REST APIs'], stipend: 'Varies', duration: '3-6 months', type: 'onsite', difficulty: 'intermediate' }
+        ,{ title: 'JavaScript Developer Intern', company: 'Software development companies', platform: 'Internshala', applyUrl: 'https://internshala.com/internships/javascript-development-internship/', matchReason: 'Matches the resume JavaScript and web development experience.', requiredSkills: ['JavaScript', 'HTML', 'CSS'], matchedSkills: ['JavaScript', 'HTML', 'CSS'], stipend: 'Varies', duration: '3-6 months', type: 'remote', difficulty: 'beginner' }
+        ,{ title: 'Web Application Developer Intern', company: 'Web application teams', platform: 'Naukri', applyUrl: 'https://www.naukri.com/web-developer-internship-jobs', matchReason: 'Matches frontend, backend, and web application development experience.', requiredSkills: ['JavaScript', 'React', 'Node.js'], matchedSkills: ['JavaScript', 'React', 'Node.js'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' }
+      ]
+    },
+    'python-data': {
+      recommendedCourses: [
+        { title: 'Machine Learning Specialization', platform: 'Coursera', courseUrl: 'https://www.coursera.org/specializations/machine-learning-introduction', instructor: 'DeepLearning.AI and Stanford Online', level: 'intermediate', duration: '10 weeks', reason: 'Builds core supervised and unsupervised machine learning skills with Python.', free: false, tags: ['Python', 'Machine Learning', 'Statistics'] },
+        { title: 'Python for Data Science', platform: 'freeCodeCamp', courseUrl: 'https://www.freecodecamp.org/learn/data-analysis-with-python/', instructor: 'freeCodeCamp', level: 'beginner', duration: '6 weeks', reason: 'Develops Python, NumPy, pandas, and data analysis skills.', free: true, tags: ['Python', 'pandas', 'NumPy', 'Data Analysis'] },
+        { title: 'Practical Deep Learning for Coders', platform: 'fast.ai', courseUrl: 'https://course.fast.ai/', instructor: 'Jeremy Howard', level: 'advanced', duration: '8 weeks', reason: 'Applies practical deep learning techniques to real projects.', free: true, tags: ['Python', 'Deep Learning', 'PyTorch'] },
+        { title: 'Google Machine Learning Crash Course', platform: 'Google', courseUrl: 'https://developers.google.com/machine-learning/crash-course', instructor: 'Google', level: 'intermediate', duration: '15 hours', reason: 'Strengthens machine learning concepts, model evaluation, and TensorFlow fundamentals.', free: true, tags: ['Machine Learning', 'TensorFlow', 'Python'] },
+        { title: 'IBM Data Science Professional Certificate', platform: 'Coursera', courseUrl: 'https://www.coursera.org/professional-certificates/ibm-data-science', instructor: 'IBM', level: 'beginner', duration: '12 weeks', reason: 'Covers Python, SQL, visualization, and applied data science workflows.', free: false, tags: ['Python', 'SQL', 'Data Science'] },
+        { title: 'Introduction to Machine Learning', platform: 'Kaggle Learn', courseUrl: 'https://www.kaggle.com/learn/intro-to-machine-learning', instructor: 'Kaggle', level: 'beginner', duration: '4 hours', reason: 'Provides a focused introduction to building and validating machine learning models.', free: true, tags: ['Python', 'Machine Learning', 'pandas'] },
+        { title: 'Deep Learning with Python', platform: 'DataCamp', courseUrl: 'https://www.datacamp.com/courses/deep-learning-in-python', instructor: 'DataCamp', level: 'intermediate', duration: '4 weeks', reason: 'Introduces neural networks and deep learning implementation with Python.', free: false, tags: ['Python', 'Deep Learning', 'Neural Networks'] }
+      ],
+      recommendedInternships: [
+        { title: 'Machine Learning Intern', company: 'Machine learning teams', platform: 'LinkedIn', applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=machine%20learning%20intern', matchReason: 'Directly matches Python and machine learning experience.', requiredSkills: ['Python', 'Machine Learning', 'pandas'], matchedSkills: ['Python', 'Machine Learning'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' },
+        { title: 'Data Science Intern', company: 'Data-driven companies', platform: 'Internshala', applyUrl: 'https://internshala.com/internships/data-science-internship/', matchReason: 'Matches Python data analysis and model-building skills.', requiredSkills: ['Python', 'pandas', 'SQL'], matchedSkills: ['Python'], stipend: 'Varies', duration: '3-6 months', type: 'remote', difficulty: 'intermediate' },
+        { title: 'Python Developer Intern', company: 'Software product companies', platform: 'Internshala', applyUrl: 'https://internshala.com/internships/python-development-internship/', matchReason: 'Builds on the Python programming foundation in the resume.', requiredSkills: ['Python', ' APIs', 'Git'], matchedSkills: ['Python'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'beginner' },
+        { title: 'AI Research Intern', company: 'Artificial intelligence research teams', platform: 'LinkedIn', applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=artificial%20intelligence%20research%20intern', matchReason: 'Suitable for resumes showing machine learning and deep learning interests.', requiredSkills: ['Python', 'Machine Learning', 'Deep Learning'], matchedSkills: ['Python', 'Machine Learning'], stipend: 'Varies', duration: '3-6 months', type: 'onsite', difficulty: 'advanced' },
+        { title: 'Data Analyst Intern', company: 'Analytics teams', platform: 'Indeed', applyUrl: 'https://in.indeed.com/jobs?q=data+analyst+intern+python', matchReason: 'Matches Python, data analysis, and quantitative problem-solving skills.', requiredSkills: ['Python', 'SQL', 'Data Analysis'], matchedSkills: ['Python'], stipend: 'Varies', duration: '3-6 months', type: 'onsite', difficulty: 'beginner' },
+        { title: 'Computer Vision Intern', company: 'Computer vision product teams', platform: 'LinkedIn', applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=computer%20vision%20intern', matchReason: 'A relevant adjacent role for Python and deep learning candidates.', requiredSkills: ['Python', 'OpenCV', 'Deep Learning'], matchedSkills: ['Python'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'advanced' },
+        { title: 'Machine Learning Engineer Intern', company: 'AI product companies', platform: 'Naukri', applyUrl: 'https://www.naukri.com/machine-learning-internship-jobs', matchReason: 'Matches Python model development, experimentation, and machine learning project work.', requiredSkills: ['Python', 'Machine Learning', 'Model Evaluation'], matchedSkills: ['Python', 'Machine Learning'], stipend: 'Varies', duration: '3-6 months', type: 'hybrid', difficulty: 'intermediate' }
+      ]
+    }
+  };
+  return fallbacks[roleId] || { recommendedCourses: [], recommendedInternships: [] };
+}
+
+function enforceRelevantRecommendations(analysis, resumeText = '') {
+  const role = detectResumeRole(resumeText);
+  const roleTerms = {
+    'mern-full-stack': ['mern', 'full stack', 'full-stack', 'frontend', 'front-end', 'backend', 'back-end', 'react', 'node', 'express', 'mongodb', 'javascript', 'web development'],
+    'java-backend': ['java', 'spring', 'backend', 'microservices', 'hibernate'],
+    'python-data': ['python', 'data science', 'machine learning', 'analytics', 'pandas', 'tensorflow'],
+    'cloud-devops': ['cloud', 'devops', 'aws', 'azure', 'docker', 'kubernetes'],
+    'general-software': ['software', 'developer', 'programming']
+  }[role.id];
+  const isRelevant = item => roleTerms.some(term => recommendationText(item).includes(term));
+  const filterRecommendations = (items, minimum) => {
+    const relevant = (items || []).filter(isRelevant);
+    return relevant.length >= minimum ? relevant : (items || []).filter(item =>
+      role.id === 'mern-full-stack'
+        ? /web|software|developer|javascript|react|node|api/i.test(recommendationText(item))
+        : isRelevant(item)
+    );
+  };
+
+  const fallback = getRoleFallbackRecommendations(role.id);
+  const relevantCourses = filterRecommendations(analysis.recommendedCourses, 7);
+  const relevantInternships = filterRecommendations(analysis.recommendedInternships, 7);
+  analysis.recommendedCourses = [...relevantCourses, ...fallback.recommendedCourses]
+    .filter((item, index, items) => items.findIndex(candidate => candidate.title === item.title) === index)
+    .slice(0, 7);
+  analysis.recommendedInternships = [...relevantInternships, ...fallback.recommendedInternships]
+    .filter((item, index, items) => items.findIndex(candidate => candidate.title === item.title) === index)
+    .slice(0, 7);
+  analysis.primaryRole = role.label;
+  analysis.primaryRoleKeywords = role.matchedKeywords;
+
+  if (resumeText) {
+    const atsScore = calculateAtsScore(resumeText, role);
+    analysis.resumeAnalysis = analysis.resumeAnalysis || {};
+    analysis.resumeAnalysis.overallScore = atsScore;
+    const categoryScores = calculateResumeCategoryScores(resumeText, role);
+    ['technicalSkills', 'projects', 'education', 'experience', 'codingProfiles'].forEach(category => {
+      analysis.resumeAnalysis[category] = analysis.resumeAnalysis[category] || {};
+      analysis.resumeAnalysis[category].score = categoryScores[category];
+    });
+    analysis.resumeAnalysis.overallFeedback = `ATS score based on the uploaded resume. Primary target: ${role.label}.`;
+  }
+
+  return analysis;
+}
+
 /**
  * Aggregates all student data into a structured profile object
  */
@@ -87,6 +254,7 @@ function buildStudentProfile(student, profileData, portfolioData, certs, project
 async function analyzeResumeWithAI(studentProfile) {
   const isUploadedResume = studentProfile.resumeText ? true : false;
   
+  const detectedRole = detectResumeRole(studentProfile.resumeText || '');
   const prompt = `You are an expert career counselor and internship advisor. Analyze the following student profile${isUploadedResume ? ' and uploaded resume' : ''} and provide:
 
 1. **Resume Strength Analysis** — Rate each area out of 10 and give brief feedback:
@@ -139,6 +307,7 @@ STUDENT PROFILE:
 ${JSON.stringify(studentProfile, null, 2)}
 
 IMPORTANT: 
+- Primary role detected locally: ${detectedRole.label}. Treat this as the controlling role for recommendations.
 - **If this is an uploaded resume, prioritize information from the resume text over the profile data.**
 - Identify the primary technology stack/career path from the resume (e.g., Java, Spring Boot, Microservices = Java/Spring backend; React, Node = MERN/Web development; Python, Data structures = Data Science)
 - **AT LEAST 60% of internship recommendations MUST align with the PRIMARY tech stack identified in the resume.**
@@ -198,7 +367,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks, 
 }`;
 
   // Try models in order: fastest & most accurate first
-  const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "gemma2-9b-it"];
+  const models = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"];
   let lastError;
 
   for (const modelName of models) {
@@ -216,7 +385,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks, 
         ],
         model: modelName,
         temperature: 0.3,
-        max_tokens: 4096,
+        max_tokens: 3072,
         response_format: { type: "json_object" }
       });
 
@@ -226,11 +395,11 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks, 
       const text = chatCompletion.choices[0]?.message?.content || '';
 
       try {
-        return JSON.parse(text);
+        return enforceRelevantRecommendations(JSON.parse(text), studentProfile.resumeText || '');
       } catch (parseErr) {
         // Try to extract JSON from response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
+        if (jsonMatch) return enforceRelevantRecommendations(JSON.parse(jsonMatch[0]), studentProfile.resumeText || '');
         console.error('[Groq] Failed to parse:', text.substring(0, 300));
         throw new Error('AI returned invalid JSON. Please try again.');
       }
@@ -275,39 +444,22 @@ async function extractTextFromPDF(filePath) {
       console.log(`[PDF] Read ${fileBuffer.length} bytes from local file`);
     }
 
-    // Clear require cache and load pdf-parse fresh
-    delete require.cache[require.resolve('pdf-parse')];
-    
-    let pdfParse;
-    try {
-      const pdfParseModule = require('pdf-parse');
-      console.log(`[PDF] Module loaded, typeof: ${typeof pdfParseModule}, keys: ${Object.keys(pdfParseModule).join(', ')}`);
-      
-      // Handle different export formats
-      if (typeof pdfParseModule === 'function') {
-        pdfParse = pdfParseModule;
-      } else if (pdfParseModule.default && typeof pdfParseModule.default === 'function') {
-        pdfParse = pdfParseModule.default;
-      } else if (typeof pdfParseModule === 'object' && pdfParseModule.parse && typeof pdfParseModule.parse === 'function') {
-        pdfParse = pdfParseModule.parse;
-      } else {
-        throw new Error(`Unable to find pdf-parse function in module. Keys: ${Object.keys(pdfParseModule).join(', ')}`);
-      }
-    } catch (loadErr) {
-      console.error(`[PDF] Failed to load pdf-parse: ${loadErr.message}`);
-      throw new Error(`pdf-parse not available: ${loadErr.message}`);
-    }
-
     console.log('[PDF] Starting PDF parsing...');
-    const data = await pdfParse(fileBuffer);
-    
-    console.log(`[PDF] Parse successful, text length: ${data?.text?.length || 0}`);
-    
-    if (!data || !data.text || data.text.trim().length === 0) {
-      throw new Error('PDF parsed but contains no extractable text');
+    const { PDFParse } = require('pdf-parse');
+    const parser = new PDFParse({ data: fileBuffer });
+    try {
+      const data = await parser.getText();
+      const text = data?.text || '';
+      console.log(`[PDF] Parse successful, text length: ${text.length}`);
+
+      if (!text.trim()) {
+        throw new Error('PDF parsed but contains no extractable text');
+      }
+
+      return text.trim();
+    } finally {
+      await parser.destroy();
     }
-    
-    return data.text.trim();
   } catch (error) {
     console.error(`[PDF] Extraction failed: ${error.message}`);
     throw new Error(`Failed to extract text from PDF: ${error.message}`);
@@ -368,11 +520,17 @@ function buildProfileFromResumeText(resumeText, student) {
   // Extract key information from resume text using pattern matching
   const skillsMatch = resumeText.match(/(?:skills?|technologies?)[:\s]*([^.]*?)(?=\n|experience|projects|education|$)/is);
   const skillsText = skillsMatch?.[1] || '';
-  const skills = skillsText
+  const listedSkills = skillsText
     .split(/[,;]/)
     .map(s => s.trim())
     .filter(s => s.length > 0)
     .slice(0, 20);
+  const knownSkills = ['HTML', 'CSS', 'JavaScript', 'React.js', 'Node.js', 'Express.js', 'MongoDB', 'MySQL', 'REST APIs', 'JWT', 'WebRTC', 'Socket.io', 'Cloudinary', 'MVC', 'Java', 'Python', 'C++', 'C'];
+  const detectedSkills = knownSkills.filter(skill => {
+    const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?:^|\\W)${escapedSkill}(?:$|\\W)`, 'i').test(resumeText);
+  });
+  const skills = [...new Set([...listedSkills, ...detectedSkills])].slice(0, 20);
 
   return {
     name: student?.name || 'Student',
@@ -400,4 +558,13 @@ function buildProfileFromResumeText(resumeText, student) {
   };
 }
 
-module.exports = { buildStudentProfile, analyzeResumeWithAI, extractTextFromPDF, extractTextFromImage, buildProfileFromResumeText };
+module.exports = {
+  buildStudentProfile,
+  analyzeResumeWithAI,
+  extractTextFromPDF,
+  extractTextFromImage,
+  buildProfileFromResumeText,
+  detectResumeRole,
+  calculateAtsScore,
+  enforceRelevantRecommendations
+};

@@ -30,6 +30,8 @@ const academicCertificateSchema = new mongoose.Schema({
     qrCodeData: { type: String },
     verificationUrl: { type: String },
     extractedStudentName: { type: String },
+    qrVerifiedStudentName: { type: String },
+    originalCertificateName: { type: String },
     extractedCourseName: { type: String },
     urlVerificationStatus: { type: String }, // 'success', 'failed', 'not_attempted'
     tamperingDetected: { type: Boolean, default: false },

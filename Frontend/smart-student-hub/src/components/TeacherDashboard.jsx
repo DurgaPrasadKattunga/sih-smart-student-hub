@@ -2459,10 +2459,19 @@ const TeacherDashboard = ({ teacherData, onLogout, onTeacherUpdate }) => {
             setShowScannerModal(false);
             
             // Show scan result
+            const verificationDetails = scanData.verificationDetails || {};
+            const certificateName = verificationDetails.extractedStudentName || 'Not detected';
+            const noteName = verificationDetails.verificationNotes?.match(/Original certificate name:\s*(.+?)(?:;|$)/i)?.[1]?.trim();
+            const qrName = scanData.originalCertificateName
+              || verificationDetails.originalCertificateName
+              || verificationDetails.qrVerifiedStudentName
+              || verificationDetails.pdfName
+              || noteName
+              || 'Not available';
             const resultMessage = scanData.scanResult === 'AUTO_VERIFIED'
-              ? '✅ Certificate verified successfully!\n\nQR code found and verified. You can now approve this certificate.'
+              ? `✅ Certificate verified successfully!\n\nName on certificate: ${certificateName}\nName after QR scan: ${qrName}\n\nBoth names match. You can approve the certificate or reject it.`
               : scanData.scanResult === 'AUTO_REJECTED'
-              ? '❌ Certificate verification failed!\n\n' + (scanData.verificationDetails?.verificationNotes || 'Verification failed. Please review and reject.')
+              ? `❌ Certificate names are not matched.\n\nName on certificate: ${certificateName}\nName after QR scan: ${qrName}\n\n${verificationDetails.verificationNotes || 'Please reject the certificate.'}`
               : '⚠️ Cannot verify digitally\n\nNo QR code found. Manual review required before approval/rejection.';
             
             alert(resultMessage);

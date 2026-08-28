@@ -22,11 +22,11 @@ async function generateCertificateHash(imageUrl) {
     // Check if it's a URL or local path
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      imageBuffer = Buffer.from(response.data);
+        imageBuffer = Buffer.from(response.data);
     } else {
-      const fs = require('fs');
+        const fs = require('fs');
       imageBuffer = fs.readFileSync(imageUrl);
-    }
+      }
     
     const hash = crypto.createHash('sha256').update(imageBuffer).digest('hex');
     return hash;
@@ -37,20 +37,67 @@ async function generateCertificateHash(imageUrl) {
 }
 
 /**
+ * Download/read a certificate and identify whether it is a PDF.
+ * @param {string} imageUrl - URL or local path of the certificate
+ * @returns {Promise<{buffer: Buffer, isPdf: boolean}>}
+ */
+async function loadCertificateInput(imageUrl) {
+  let buffer;
+  let contentType = '';
+
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    buffer = Buffer.from(response.data);
+    contentType = response.headers['content-type'] || '';
+  } else {
+    const fs = require('fs');
+    buffer = fs.readFileSync(imageUrl);
+  }
+
+  const isPdf = /application\/pdf/i.test(contentType) ||
+    buffer.subarray(0, 5).toString() === '%PDF-' ||
+    /\.pdf(?:$|[?#])/i.test(imageUrl);
+
+  return { buffer, isPdf };
+}
+
+/**
+ * Render the first PDF page as a PNG for image-based analysis.
+ * @param {Buffer} pdfBuffer - PDF contents
+ * @returns {Promise<Buffer>}
+ */
+async function renderPdfFirstPage(pdfBuffer) {
+  const parser = new PDFParse({ data: pdfBuffer });
+  try {
+    const result = await parser.getScreenshot({
+      partial: [1],
+      desiredWidth: 2000,
+      imageBuffer: true,
+      imageDataUrl: false
+    });
+
+    if (!result.pages || !result.pages[0] || !result.pages[0].data) {
+      throw new Error('PDF has no renderable pages');
+    }
+
+    return Buffer.from(result.pages[0].data);
+  } finally {
+    await parser.destroy();
+  }
+}
+
+/**
  * Extract QR code from certificate image
  * @param {string} imageUrl - URL or path of the certificate image
  * @returns {Promise<object>} - QR code data and verification URL
  */
 async function extractQRCode(imageUrl) {
   try {
-    let image;
-    
-    // Load image using Jimp
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      image = await Jimp.read(imageUrl);
-    } else {
-      image = await Jimp.read(imageUrl);
-    }
+    const input = await loadCertificateInput(imageUrl);
+    const imageBuffer = input.isPdf
+      ? await renderPdfFirstPage(input.buffer)
+      : input.buffer;
+    const image = await Jimp.read(imageBuffer);
     
     // Convert to raw image data for jsQR
     const imageData = {
@@ -113,7 +160,11 @@ function extractVerificationUrl(qrData) {
  */
 async function performOCR(imageUrl) {
   try {
-    const { data: { text } } = await Tesseract.recognize(imageUrl, 'eng', {
+    const input = await loadCertificateInput(imageUrl);
+    const imageBuffer = input.isPdf
+      ? await renderPdfFirstPage(input.buffer)
+      : input.buffer;
+    const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
       logger: m => console.log(m)
     });
     
@@ -148,6 +199,44 @@ async function performOCR(imageUrl) {
 function extractStudentName(text) {
   console.log('Attempting to extract student name from text (length:', text.length, ')');
   console.log('Text preview:', text.substring(0, 200));
+
+  const cleanCandidateName = value => value
+    .replace(/\s+(?:for|with|on|in)\s+.*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const isCertificateHeading = value =>
+    /^(?:nptel|online|certification|certificate|course|skill|india)\b/i.test(value);
+
+  // Match the candidate even when OCR puts the award text and name on one line.
+  const awardNameMatch = text.match(/(?:this\s+certificate\s+is\s+)?(?:awarded|presented)\s+to\s+([\s\S]*?)(?=\s+for\s+(?:successfully\s+)?(?:completing|the)|\r?\n|$)/i);
+  if (awardNameMatch && awardNameMatch[1]) {
+    const awardName = cleanCandidateName(awardNameMatch[1]);
+    const awardWords = awardName.split(/\s+/).filter(word => /^[A-Za-z.'-]+$/.test(word));
+    if (awardWords.length >= 2 && !isCertificateHeading(awardName)) {
+      console.log('✓ Extracted name from award text:', awardName);
+      return awardName;
+    }
+  }
+
+  // Certificate names are printed immediately after the award statement.
+  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const awardLineIndex = lines.findIndex(line =>
+    /(?:awarded\s+to|presented\s+to|certifies\s+that)/i.test(line)
+  );
+
+  if (awardLineIndex !== -1) {
+    const nameLine = lines[awardLineIndex + 1]
+      ?.replace(/^(?:is\s+)?(?:awarded\s+to|presented\s+to)\s*/i, '')
+      .replace(/\s+(?:for|with|on|in)\s+.*$/i, '')
+      .trim();
+    const nameWords = nameLine?.split(/\s+/).filter(word => /^[A-Za-z.'-]+$/.test(word));
+
+    if (nameLine && nameWords && nameWords.length >= 2 &&
+      !isCertificateHeading(nameLine)) {
+      console.log('✓ Extracted name after award statement:', nameLine);
+      return nameLine;
+    }
+  }
   
   // Common patterns for student names in certificates
   const patterns = [
@@ -176,7 +265,7 @@ function extractStudentName(text) {
       
       // Validate: name should be at least 2 words (first + last name minimum)
       const words = finalName.split(/\s+/).filter(w => w.length > 1);
-      if (words.length >= 2) {
+      if (words.length >= 2 && !isCertificateHeading(finalName)) {
         console.log(`✓ Extracted name using pattern ${i + 1}:`, finalName);
         return finalName;
       }
@@ -225,13 +314,28 @@ function extractCourseName(text) {
  */
 async function extractAndParsePDF(htmlContent, baseUrl) {
   try {
+    if (Buffer.isBuffer(htmlContent) || htmlContent instanceof Uint8Array) {
+      return parseCertificatePDF(Buffer.from(htmlContent), baseUrl);
+    }
+
     // Extract PDF link from HTML - handle both quoted and unquoted href attributes
     // NPTEL uses: href=../../path/to/cert.pdf (no quotes)
     // Others use: href="path/to/cert.pdf" or href='path/to/cert.pdf'
     const pdfLinkMatch = htmlContent.match(/href=["']?([^"'\s>]*\.pdf)["']?/i);
     
     if (!pdfLinkMatch) {
-      console.log('No PDF link found in HTML');
+      const iframeMatch = htmlContent.match(/<iframe\b[^>]*\bsrc\s*=\s*["']?([^"'\s>]+)["']?[^>]*>/i);
+      if (iframeMatch) {
+        const iframeUrl = new URL(iframeMatch[1], baseUrl).toString();
+        console.log('Following certificate iframe:', iframeUrl);
+        const iframeResponse = await axios.get(iframeUrl, {
+          timeout: 15000,
+          responseType: 'text'
+        });
+        return extractAndParsePDF(iframeResponse.data, iframeUrl);
+      }
+
+      console.log('No PDF link or certificate iframe found in HTML');
       console.log('HTML preview for debugging:', htmlContent.substring(0, 500));
       return { success: false, text: null, studentName: null };
     }
@@ -320,9 +424,25 @@ async function extractAndParsePDF(htmlContent, baseUrl) {
     
     console.log('PDF downloaded, size:', pdfResponse.data.length, 'bytes');
     
+    return parseCertificatePDF(Buffer.from(pdfResponse.data), pdfUrl);
+  } catch (error) {
+    console.error('Error extracting/parsing PDF:', error.message);
+    return { success: false, text: null, studentName: null, error: error.message };
+  }
+}
+
+/**
+ * Parse a downloaded certificate PDF and extract its original student name.
+ * @param {Buffer} pdfBuffer - PDF contents
+ * @param {string} pdfUrl - Source URL for diagnostics
+ * @returns {Promise<object>}
+ */
+async function parseCertificatePDF(pdfBuffer, pdfUrl) {
+  try {
+    console.log('Parsing certificate PDF:', pdfUrl);
     // Parse PDF using PDFParse class from pdf-parse v2.4.5
     // Convert Buffer to Uint8Array as required by the library
-    const uint8Array = new Uint8Array(pdfResponse.data);
+    const uint8Array = new Uint8Array(pdfBuffer);
     const parser = new PDFParse(uint8Array);
     await parser.load(); // Load the PDF
     
@@ -363,7 +483,7 @@ async function extractAndParsePDF(htmlContent, baseUrl) {
       pdfUrl
     };
   } catch (error) {
-    console.error('Error extracting/parsing PDF:', error.message);
+    console.error('Error parsing certificate PDF:', error.message);
     return { success: false, text: null, studentName: null, error: error.message };
   }
 }
@@ -416,8 +536,14 @@ async function verifyUrl(verificationUrl, expectedData = {}) {
       };
     }
     
+    const responseContentType = response.headers['content-type'] || '';
+    const responseIsPdf = /application\/pdf/i.test(responseContentType) ||
+      (Buffer.isBuffer(response.data) && response.data.subarray(0, 5).toString() === '%PDF-');
+
     // Keep original HTML for PDF extraction
-    const originalHtml = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+    const originalHtml = responseIsPdf
+      ? null
+      : typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
     
     // Check if response contains expected data (for ALL domains)
     // Handle both HTML and JSON responses
@@ -472,7 +598,9 @@ async function verifyUrl(verificationUrl, expectedData = {}) {
       console.log('Attempting to extract PDF from verification page...');
       
       // Try to extract PDF from HTML response - use ORIGINAL HTML, not lowercased
-      const pdfResult = await extractAndParsePDF(originalHtml, verificationUrl);
+      const pdfResult = responseIsPdf
+        ? await extractAndParsePDF(response.data, verificationUrl)
+        : await extractAndParsePDF(originalHtml, verificationUrl);
       
       if (pdfResult.success && pdfResult.studentName) {
         console.log('===== PDF VERIFICATION =====');
@@ -518,26 +646,43 @@ async function verifyUrl(verificationUrl, expectedData = {}) {
             dataMatch: namesMatch,
             pdfVerified: true,
             pdfName: pdfResult.studentName,
+            originalCertificateName: pdfResult.studentName,
             message: namesMatch 
               ? 'Certificate verified - PDF name matches uploaded image' 
               : 'Certificate appears to be edited - PDF name does not match uploaded image',
             responseData: response.data
           };
         }
+
+        console.log('Uploaded certificate name was not detected; original PDF name preserved without a match');
+        return {
+          success: true,
+          status: 'VERIFIED',
+          statusCode: 200,
+          trustedDomain: true,
+          studentNameMatch: false,
+          courseNameMatch: true,
+          dataMatch: false,
+          pdfVerified: true,
+          pdfName: pdfResult.studentName,
+          originalCertificateName: pdfResult.studentName,
+          message: 'Original PDF name found, but uploaded certificate name could not be detected',
+          responseData: response.data
+        };
       }
       
       // Fallback if PDF parsing failed - just verify URL is reachable
       console.log('PDF parsing failed or no name found, using basic URL verification');
       return {
-        success: true,
-        status: 'VERIFIED',
-        statusCode: 200,
+        success: false,
+        status: 'ORIGINAL_CERTIFICATE_NOT_FOUND',
+        statusCode: 404,
         trustedDomain: true,
-        studentNameMatch: true,
+        studentNameMatch: false,
         courseNameMatch: true,
-        dataMatch: true,
+        dataMatch: false,
         pdfVerified: false,
-        message: 'Certificate verified via trusted domain QR code (PDF parsing unavailable)',
+        message: 'Original Course Certificate PDF was not available from the verification URL',
         responseData: response.data
       };
     }
@@ -631,6 +776,19 @@ async function scanAndVerifyCertificate(certificateImageUrl, studentData = {}, o
       console.log('OCR completed');
       if (ocrResult.studentName) console.log('Extracted student name from uploaded image:', ocrResult.studentName);
       if (ocrResult.courseName) console.log('Extracted course name from uploaded image:', ocrResult.courseName);
+
+      // Text-based PDFs can provide a more reliable uploaded name than OCR.
+      if (!ocrResult.studentName) {
+        const input = await loadCertificateInput(certificateImageUrl);
+        if (input.isPdf) {
+          const uploadedPdfResult = await parseCertificatePDF(input.buffer, certificateImageUrl);
+          if (uploadedPdfResult.studentName) {
+            ocrResult.studentName = uploadedPdfResult.studentName;
+            ocrResult.courseName = ocrResult.courseName || extractCourseName(uploadedPdfResult.text || '');
+            console.log('Extracted uploaded certificate name from PDF text:', ocrResult.studentName);
+          }
+        }
+      }
     } catch (ocrError) {
       console.warn('OCR failed:', ocrError.message);
     }
@@ -647,6 +805,7 @@ async function scanAndVerifyCertificate(certificateImageUrl, studentData = {}, o
           courseName: ocrResult.courseName
         });
         console.log('URL verification result:', urlVerificationResult.status);
+        console.log('Name after QR scan:', urlVerificationResult.originalCertificateName || urlVerificationResult.pdfName || 'Not available');
       } catch (urlError) {
         console.warn('URL verification failed:', urlError.message);
         urlVerificationResult = { success: false, status: 'ERROR', message: urlError.message };
@@ -656,6 +815,10 @@ async function scanAndVerifyCertificate(certificateImageUrl, studentData = {}, o
     // Step 6: Determine final scan result
     let scanResult = 'SOURCE_NOT_DIGITALLY_VERIFIABLE';
     let verificationNotes = [];
+
+    if (urlVerificationResult.pdfName) {
+      verificationNotes.push(`Original certificate name: ${urlVerificationResult.pdfName}`);
+    }
     
     if (tamperingDetected) {
       scanResult = 'AUTO_REJECTED';
@@ -669,6 +832,9 @@ async function scanAndVerifyCertificate(certificateImageUrl, studentData = {}, o
     } else if (qrResult.found && !urlVerificationResult.success) {
       scanResult = 'AUTO_REJECTED';
       verificationNotes.push('QR code found but verification URL failed or unreachable');
+    } else if (qrResult.found && !urlVerificationResult.pdfVerified) {
+      scanResult = 'AUTO_REJECTED';
+      verificationNotes.push('Original certificate name could not be read - names not matched');
     } else if (!qrResult.found) {
       scanResult = 'SOURCE_NOT_DIGITALLY_VERIFIABLE';
       verificationNotes.push('No QR code found - cannot verify digitally');
@@ -684,6 +850,8 @@ async function scanAndVerifyCertificate(certificateImageUrl, studentData = {}, o
         qrCodeData: qrResult.data,
         verificationUrl: qrResult.verificationUrl,
         extractedStudentName: ocrResult.studentName,
+        qrVerifiedStudentName: urlVerificationResult.originalCertificateName || urlVerificationResult.pdfName || null,
+        originalCertificateName: urlVerificationResult.originalCertificateName || urlVerificationResult.pdfName || null,
         extractedCourseName: ocrResult.courseName,
         urlVerificationStatus: urlVerificationResult.status,
         tamperingDetected,

@@ -37,7 +37,7 @@ router.get('/microsoft',
  * - On failure: Redirect to login with error message
  */
 // Compute frontend base URL for redirects
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const frontendUrl = process.env.FRONTEND_URL || 'https://sih-smart-student-hub-2.onrender.com';
 
 router.get('/microsoft/callback',
   passport.authenticate('microsoft', {
@@ -51,7 +51,7 @@ router.get('/microsoft/callback',
 
       if (!user) {
         console.error('❌ No user object after Microsoft authentication');
-        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=no_user`);
+        return res.redirect(`${process.env.FRONTEND_URL || 'https://sih-smart-student-hub-2.onrender.com'}/login?error=no_user`);
       }
 
       console.log(`✅ User authenticated: ${user.email}`);
@@ -75,7 +75,7 @@ router.get('/microsoft/callback',
       // Redirect to frontend login page with token
       // StudentLogin component will process the token and navigate to dashboard
       // =====================================================
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://sih-smart-student-hub-2.onrender.com';
       const redirectUrl = `${frontendUrl}/student-login?token=${token}&user=${encodeURIComponent(JSON.stringify({
         studentId: user.studentId,
         name: user.name,
@@ -88,7 +88,7 @@ router.get('/microsoft/callback',
 
     } catch (error) {
       console.error('❌ Error in Microsoft callback:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://sih-smart-student-hub-2.onrender.com';
       res.redirect(`${frontendUrl}/login?error=callback_error`);
     }
   }
@@ -104,7 +104,7 @@ router.get('/logout', (req, res) => {
     if (err) {
       console.error('Logout error:', err);
     }
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://sih-smart-student-hub-2.onrender.com';
     res.redirect(`${frontendUrl}/login`);
   });
 });

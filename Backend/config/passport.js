@@ -45,7 +45,7 @@ module.exports = function(app) {
   passport.use(new MicrosoftStrategy({
       clientID: process.env.MICROSOFT_CLIENT_ID,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-      callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3000/auth/microsoft/callback',
+      callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'https://sih-smart-student-hub-1.onrender.com/auth/microsoft/callback',
       scope: ['user.read'] // Minimum scope needed for email and profile
     },
     async (accessToken, refreshToken, profile, done) => {
